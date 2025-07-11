@@ -14,6 +14,12 @@ class Cliente(db.Model):
     cliente_veiculos: Mapped[list] = mapped_column(JSON, nullable=True, default=list)
     cliente_motoristas: Mapped[list] = mapped_column(JSON, nullable=True, default=list)
     cliente_seguro_anterior: Mapped[str] = mapped_column(nullable=True)
+    cliente_substage: Mapped[str] = mapped_column(nullable=True)
+    qtd_veiculos: Mapped[int] = mapped_column(Integer, nullable=True)
+    veiculo_atual: Mapped[int] = mapped_column(Integer, nullable=True)
+
+    qtd_motoristas: Mapped[int] = mapped_column(Integer, nullable=True)
+    motorista_atual: Mapped[int] = mapped_column(Integer, nullable=True)
 
 
     

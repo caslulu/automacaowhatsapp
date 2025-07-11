@@ -13,56 +13,20 @@ class ConversationFlow:
         self.user_sessions = {}
     
     def get_user_session(self, phone_number):
-        if phone_number not in self.user_sessions:
-            cliente = Cliente.query.filter_by(phone_number=phone_number).first()
-            if cliente:
-                self.user_sessions[phone_number] = {
-                    'stage': cliente.cliente_stage or 'initial',
-                    'data':{
-                        "nome_cliente": cliente.cliente_nome,
-                        "driverlicense_cliente": cliente.cliente_driver,
-                        "driverstate_cliente": cliente.cliente_driver_state,
-                        "birthdate_cliente": cliente.cliente_birthdate,
-                        "address_cliente": cliente.cliente_address,
-                        "veiculos": cliente.cliente_veiculos or [],
-                        "motoristas": cliente.cliente_motoristas or [],
-                        "tempo_seguro_anterior": cliente.cliente_seguro_anterior,
-                    }
-                }
-            else:
-                self.user_sessions[phone_number] =  {
-                    "stage": 'initial',
-                    'data': {}
-                }
-        return self.user_sessions[phone_number]
-    def set_stage(self, phone_number, new_stage, data=None):
-        session = self.get_user_session(phone_number)
-        session['stage'] = new_stage
-        if data:
-            session['data'].update(data)
         cliente = Cliente.query.filter_by(phone_number=phone_number).first()
+        
         if not cliente:
-            cliente = Cliente(phone_number=phone_number)
+            cliente = Cliente(phone_number=phone_number, cliente_stage='initial')
             db.session.add(cliente)
-        cliente.cliente_stage = new_stage
-        if 'nome_cliente' in session['data']:
-            cliente.cliente_nome = session['data']['nome_cliente']
-        if 'driverlicense_cliente' in session['data']:
-            cliente.cliente_driver = session['data']['driverlicense_cliente']
-        if 'driverstate_cliente' in session['data']:
-            cliente.cliente_driver_state = session['data']['driverstate_cliente']
-        if 'birthdate_cliente' in session['data']:
-            cliente.cliente_birthdate = session['data']['birthdate_cliente']
-        if 'address_cliente' in session['data']:
-            cliente.cliente_address = session['data']['address_cliente']
-        if 'veiculos' in session['data']:
-            cliente.cliente_veiculos = session['data']['veiculos']
-        if 'motoristas' in session['data']:
-            cliente.cliente_motoristas = session['data']['motoristas']
-        if 'tempo_seguro_anterior' in session['data']:
-            cliente.cliente_seguro_anterior = session['data']['tempo_seguro_anterior']
-        elif not 'tempo_seguro_anterior' in session['data']:
-            cliente.cliente_seguro_anterior = "nao tem"
+            db.session.commit()  
+        return cliente
+
+    def set_stage(self, cliente, new_stage=None, new_quote_step=None):
+        if new_stage:
+            cliente.cliente_stage = new_stage
+        
+        if new_quote_step:
+            cliente.quote_step = new_quote_step
         db.session.commit()
 
 
@@ -74,7 +38,7 @@ class ConversationFlow:
             return "Conversa reiniciada, Digite um 'oi' para começar novamente."
         
         session = self.get_user_session(phone_number)
-        stage = session['stage']
+        stage = session.cliente_stage
         
         if stage == 'initial':
             return self.handle_initial(phone_number)
@@ -89,203 +53,199 @@ class ConversationFlow:
         
 
     def handle_initial(self, phone_number):
-        self.set_stage(phone_number, 'waiting_option')
+        session = self.get_user_session(phone_number)
+        self.set_stage(session, new_stage='waiting_option')
+
         return "Ola! Como posso ajudar voce? \n 1- Cotação para veiculo\n 2- Suporte\n Para voltar para o inicio, digite reinciar."
     
     def handle_options(self, phone_number, message):
+        session = self.get_user_session(phone_number)
         if "1" in message or "quote" in message or "cotacao" in message:
-            self.set_stage(phone_number, 'auto_quote', {'quote_step': 'awaiting_name'})
+            self.set_stage(session, new_stage='auto_quote', new_quote_step='awaiting_name')
             return "(Passo 1 de 10) Otimo! Para comecar, qual o seu nome?"
         elif "2" in message or "suporte" in message:
-            self.set_stage(phone_number, 'suporte')
+            self.set_stage(session, new_stage='suporte')
             return "Entendi, qual problema voce esta tendo? Iremos conectar voce com um agente."
         elif "reiniciar" in message.lower() or "restart" in message.lower():
             self.reset_session(phone_number)
         
     def handle_quote(self, phone_number, message):
         session = self.get_user_session(phone_number)
-        step = session['data'].get('quote_step', 'awaiting_name')
-
         #nome do cliente
-        if step == 'awaiting_name':
-            session['data']['nome_cliente'] = message
-            self.set_stage(phone_number, 'auto_quote', {'quote_step': 'awaiting_birthdate'})
+        if session.cliente_substage == 'awaiting_name':
+            session.cliente_nome = message
+            self.set_stage(session, new_quote_step='awaiting_birthdate')
             return "(Passo 2 de 10) Obrigado! Agora, qual a sua data de nascimento? (use o formato MM/DD/AAAA)"
         
         #data de nascimento do cliente
-        elif step == "awaiting_birthdate":
+        elif session.cliente_substage == "awaiting_birthdate":
             data = parse_data_flexivel(message)
             if data is not None:
                 data_formatada = datetime.strftime(data, "%m/%d/%Y")
-                session['data']['birthdate_cliente'] = data_formatada
-                self.set_stage(phone_number, 'auto_quote', {'quote_step': 'awaiting_driverlicense'})
+                session.cliente_birthdate= data_formatada
+                self.set_stage(session, new_quote_step='awaiting_driverlicense')
                 return "(Passo 3 de 10) Obrigado! Agora, qual o numero da sua driver license ou cnh?"
             else:
                 return "Ops! parece que voce digitou a data de nascimento errada, tem como voce corrigir?"
             
         #driver do cliente
-        elif step == "awaiting_driverlicense":
-            session['data']['driverlicense_cliente'] = message
-            self.set_stage(phone_number, 'auto_quote', {'quote_step': 'awaiting_driverstate'})
+        elif session.cliente_substage == "awaiting_driverlicense":
+            session.cliente_driver = message
+            self.set_stage(session, new_quote_step='awaiting_driverstate')
             return "(Passo 4 de 10) Perfeito! Poderia me dizer qual o estado da sua driver license? (Se for internacional, diga internacional)"
         
         #numero da driver do cliente
-        elif step == "awaiting_driverstate":
-            session['data']['driverstate_cliente'] = message
-            self.set_stage(phone_number, 'auto_quote', {'quote_step': 'awaiting_address'})
+        elif session.cliente_substage == "awaiting_driverstate":
+            session.cliente_driver_state = message
+            self.set_stage(session, new_quote_step='awaiting_address')
             return ("(Passo 5 de 10) Obrigado! Poderia me dizer qual o seu endereço? (Inclua o zipcode, por favor!)")
         
         #endereco do cliente
-        elif step == "awaiting_address":
-            session['data']['address_cliente'] = message
-            self.set_stage(phone_number, 'auto_quote', {'quote_step': 'awaiting_veiculos'})
+        elif session.cliente_substage == "awaiting_address":
+            session.cliente_address = message
+            self.set_stage(session, new_quote_step='awaiting_veiculos')
             return ("(Passo 6 de 10) Okay! Poderia me dizer quantos veiculos voce deseja adicionar?")
+        
         #veiculos do cliente
-        elif step == "awaiting_veiculos":
+        elif session.cliente_substage == "awaiting_veiculos":
             try:
                 qtd = int(message)
                 if qtd < 1:
                     return "Por favor, informe um número válido de veículos."
-                session['data']['qtd_veiculos'] = qtd
-                session['data']['veiculos'] = []
-                session['data']['veiculo_atual'] = 1
-                self.set_stage(phone_number, 'auto_quote', {'quote_step': 'awaiting_vin'})
+                session.qtd_veiculos = qtd
+                session.veiculo_atual = 1
+                session.cliente_veiculos = []
+                self.set_stage(session, new_quote_step='awaiting_vin')
                 return f"(Passo 7 de 10) (Veículo 1 de {qtd}) Qual o VIN do veículo?"
             except ValueError:
                 return "Por favor, informe um número válido de veículos."
 
-        elif step == "awaiting_vin":
+        elif session.cliente_substage == "awaiting_vin":
             vin = message.strip()
             if len(vin) != 17:
                 return "O VIN deve ter 17 caracteres. Por favor, verifique e envie novamente."
-            veiculo = {'vin': vin}
-            session['data']['veiculo_em_edicao'] = veiculo
-            self.set_stage(phone_number, 'auto_quote', {'quote_step': 'awaiting_financiado'})
-            atual = session['data']['veiculo_atual']
-            total = session['data']['qtd_veiculos']
-            return f"(Passo 7 de 10) (Veículo {atual} de {total}) O veículo é financiado ou quitado?"
+            veiculos_lista = session.cliente_veiculos or []
+            veiculos_lista.append({"vin": vin})
+            session.cliente_veiculos = veiculos_lista
 
-        elif step == "awaiting_financiado":
-            veiculo = session['data']['veiculo_em_edicao']
+            self.set_stage(session, new_quote_step='awaiting_financiado')
+            return f"(Passo 7 de 10) (Veículo {session.veiculo_atual} de {session.qtd_veiculos}) O veículo é financiado ou quitado?"
+
+        elif session.cliente_substage == "awaiting_financiado":
             financiado = message.strip().lower()
-            if not financiado or financiado not in ["financiado", "quitado"]:
+            if financiado not in ["financiado", "quitado"]:
                 return "Por favor, responda apenas 'financiado' ou 'quitado'."
-            veiculo['financiado'] = financiado
-            self.set_stage(phone_number, 'auto_quote', {'quote_step': 'awaiting_tempo'})
-            atual = session['data']['veiculo_atual']
-            total = session['data']['qtd_veiculos']
-            return f"(Passo 7 de 10) (Veículo {atual} de {total}) Há quanto tempo você possui esse veículo?"
+            veiculos_lista = session.cliente_veiculos
+            veiculos_lista[-1]["financiado"] = financiado
+            session.cliente_veiculos = veiculos_lista
+            self.set_stage(session, new_quote_step='awaiting_tempo')
 
-        elif step == "awaiting_tempo":
-            veiculo = session['data']['veiculo_em_edicao']
+            return f"(Passo 7 de 10) (Veículo {session.veiculo_atual} de {session.qtd_veiculos}) Há quanto tempo você possui esse veículo?"
+
+        elif session.cliente_substage == "awaiting_tempo":
             tempo = message.strip()
             if not tempo:
                 return "Por favor, informe há quanto tempo você possui o veículo."
-            veiculo['tempo'] = tempo
-            session['data']['veiculos'].append(veiculo)
-            atual = session['data']['veiculo_atual']
-            total = session['data']['qtd_veiculos']
-            if atual < total:
-                session['data']['veiculo_atual'] += 1
-                self.set_stage(phone_number, 'auto_quote', {'quote_step': 'awaiting_vin'})
-                return f"(Passo 7 de 10) (Veículo {atual+1} de {total}) Qual o VIN do veículo?"
+
+            veiculos_lista = session.cliente_veiculos
+            veiculos_lista[-1]["tempo"] = tempo
+            session.cliente_veiculos = veiculos_lista
+
+            if session.veiculo_atual < session.qtd_veiculos:
+                session.veiculo_atual += 1
+                self.set_stage(session, new_quote_step='awaiting_vin')
+                return f"(Passo 7 de 10) (Veículo {session.veiculo_atual} de {session.qtd_veiculos}) Qual o VIN do veículo?"
             else:
-                self.set_stage(phone_number, 'auto_quote', {'quote_step': 'awaiting_outros_motoristas'})
-                session['data'].pop('veiculo_em_edicao', None)
-                session['data'].pop('veiculo_atual', None)
-                return "(Passo 8 de 10) Todos os veículos foram cadastrados! Deseja cadastrar outros motoristas? ."
-        elif step == "awaiting_outros_motoristas":
+                self.set_stage(session, new_quote_step='awaiting_outros_motoristas')
+                return "(Passo 8 de 10) Todos os veículos foram cadastrados! Deseja cadastrar outros motoristas?"
+            
+        elif session.cliente_substage == "awaiting_outros_motoristas":
             resposta = message.lower()
             if "nao" in resposta or 'não' in resposta or 'n' == resposta:
-                self.set_stage(phone_number, 'auto_quote', {'quote_step': "awaiting_seguro_anterior"})
+                self.set_stage(session, new_quote_step="awaiting_seguro_anterior")
                 return "(Passo 9 de 10) Ok, sem motoristas extras. Estamos quase acabando! Você possui seguro atualmente ou teve seguro nos últimos 30 dias?"
             elif "sim" in resposta or 's' == resposta:
-                self.set_stage(phone_number, 'auto_quote', {'quote_step': 'awaiting_qtd_motoristas'})
+                self.set_stage(session, new_quote_step='awaiting_qtd_motoristas')
                 return "(Passo 8 de 10) Entendido. Quantos motoristas extras você gostaria de adicionar?"
             else:
                 return "Não entendi sua resposta. Por favor, responda com 'sim' ou 'não'."
             
         #outros motoristas
-        elif step == "awaiting_qtd_motoristas":
+        elif session.cliente_substage == "awaiting_qtd_motoristas":
             try:
                 qtd = int(message)
                 if qtd < 1:
                     return "Por favor, digite um número válido (1 ou mais)."
-                session['data']['qtd_motoristas'] = qtd
-                session['data']['motoristas'] = []
-                session['data']['motorista_atual'] = 1
-                self.set_stage(phone_number, 'auto_quote', {'quote_step': 'awaiting_motorista_birthdate'})
+                session.qtd_motoristas = qtd
+                session.motorista_atual = 1
+                session.cliente_motoristas = []
+                self.set_stage(session, new_quote_step='awaiting_motorista_birthdate')
                 return f"(Passo 8 de 10) (Motorista extra 1 de {qtd}) Qual a data de nascimento? (use o formato MM/DD/AAAA)"
             except ValueError:
                 return "Não entendi. Por favor, digite apenas o número de motoristas extras."
 
-        elif step == "awaiting_motorista_birthdate":
-            motorista = {}
+        elif session.cliente_substage == "awaiting_motorista_birthdate":
             data = parse_data_flexivel(message)
             if data is not None:
                 if data > datetime.now():
                     return "Data inválida. Por favor, informe uma data de nascimento válida."
                 data_formatada = datetime.strftime(data, "%m/%d/%Y")
-                motorista['birthdate'] = data_formatada
-                session['data']['motorista_em_edicao'] = motorista
-                self.set_stage(phone_number, 'auto_quote', {'quote_step': 'awaiting_motorista_driver'})
-                atual = session['data']['motorista_atual']
-                total = session['data']['qtd_motoristas']
-                return f"(Passo 8 de 10) (Motorista extra {atual} de {total}) Qual o número da driver license desse motorista?"
+                motorista_lista = session.cliente_motoristas or []
+                motorista_lista.append({"birthdate": data_formatada})
+                session.cliente_motoristas = motorista_lista
+                self.set_stage(session, new_quote_step='awaiting_motorista_driver')
+                return f"(Passo 8 de 10) (Motorista extra {session.motorista_atual} de {session.qtd_motoristas}) Qual o número da driver license desse motorista?"
             else:
                 return "Data inválida. Por favor, informe a data de nascimento no formato MM/DD/AAAA."
 
-        elif step == "awaiting_motorista_driver":
-            motorista = session['data']['motorista_em_edicao']
+        elif session.cliente_substage == "awaiting_motorista_driver":
             driverlicense = message.strip()
             if not driverlicense:
                 return "O número da CNH não pode ficar em branco. Por favor, informe corretamente."
-            motorista['driverlicense'] = driverlicense
-            self.set_stage(phone_number, 'auto_quote', {'quote_step': 'awaiting_motorista_state'})
-            atual = session['data']['motorista_atual']
-            total = session['data']['qtd_motoristas']
-            return f"(Passo 8 de 10) (Motorista extra {atual} de {total}) Qual o estado da driver license desse motorista?"
+            motorista_lista = session.cliente_motoristas
+            motorista_lista[-1]["driver_license"] = driverlicense
+            session.cliente_motoristas = motorista_lista
+            self.set_stage(session, new_quote_step='awaiting_motorista_state')
+            return f"(Passo 8 de 10) (Motorista extra {session.motorista_atual} de {session.qtd_motoristas}) Qual o estado da driver license desse motorista?"
 
-        elif step == "awaiting_motorista_state":
-            motorista = session['data']['motorista_em_edicao']
+        elif session.cliente_substage == "awaiting_motorista_state":
             driverstate = message.strip()
             if not driverstate:
                 return "O estado da CNH não pode ficar em branco. Por favor, informe corretamente."
-            motorista['driverstate'] = driverstate
-            self.set_stage(phone_number, 'auto_quote', {'quote_step': 'awaiting_motorista_relacao'})
-            atual = session['data']['motorista_atual']
-            total = session['data']['qtd_motoristas']
-            return f"(Passo 8 de 10) (Motorista extra {atual} de {total}) Qual a relação desse motorista com o motorista principal? (Ex: filho, esposa, amigo...)"
+            motorista_lista = session.cliente_motoristas
+            motorista_lista[-1]["driver_license_state"] = driverstate
+            session.cliente_motoristas = motorista_lista
+            self.set_stage(session, new_quote_step='awaiting_motorista_relacao')
+            return f"(Passo 8 de 10) (Motorista extra {session.motorista_atual} de {session.qtd_motoristas}) Qual a relação desse motorista com o motorista principal? (Ex: filho, esposa, amigo...)"
 
-        elif step == "awaiting_motorista_relacao":
-            motorista = session['data']['motorista_em_edicao']
+        elif session.cliente_substage == "awaiting_motorista_relacao":
             relacao = message.strip()
             if not relacao:
                 return "A relação não pode ficar em branco. Por favor, informe corretamente (Ex: filho, esposa, amigo...)."
-            motorista['relacao'] = relacao
-            session['data']['motoristas'].append(motorista)
-            atual = session['data']['motorista_atual']
-            total = session['data']['qtd_motoristas']
-            if atual < total:
-                session['data']['motorista_atual'] += 1
-                self.set_stage(phone_number, 'auto_quote', {'quote_step': 'awaiting_motorista_birthdate'})
-                return f"(Passo 8 de 10) (Motorista extra {atual+1} de {total}) Qual a data de nascimento? (use o formato MM/DD/AAAA)"
+            motorista_lista = session.cliente_motoristas
+            motorista_lista[-1]["relation"] = relacao
+            session.cliente_motoristas = motorista_lista
+
+
+            if session.motorista_atual < session.qtd_motoristas:
+                session.motorista_atual += 1
+                self.set_stage(session, new_quote_step='awaiting_motorista_birthdate')
+                return f"(Passo 8 de 10) (Motorista extra {session.motorista_atual} de {session.qtd_motoristas}) Qual a data de nascimento? (use o formato MM/DD/AAAA)"
             else:
-                self.set_stage(phone_number, 'auto_quote', {'quote_step': 'awaiting_seguro_anterior'})
-                session['data'].pop('motorista_em_edicao', None)
-                session['data'].pop('motorista_atual', None)
+                self.set_stage(session, new_quote_step='awaiting_seguro_anterior')
                 return "(Passo 9 de 10) Todos os motoristas extras foram cadastrados! Agora, você possui seguro atualmente ou teve seguro nos últimos 30 dias?"
+        
         #seguro anterior do cliente
-        elif step == "awaiting_seguro_anterior":
+        elif session.cliente_substage == "awaiting_seguro_anterior":
             if "nao" in message.lower() or 'não' in message.lower() or 'n' in message.lower() or "0" in message.lower():
                 return self.concluir_cotacao(phone_number)
             elif "sim" in message.lower() or 's' in message.lower() or "si" in message.lower():
-                self.set_stage(phone_number, 'auto_quotes', {'quote_step': 'awaiting_tempo_seguro_anterior'})
+                self.set_stage(session, new_quote_step='awaiting_tempo_seguro_anterior')
                 return "(Passo 10 de 10) Para finalizar, quanto tempo de seguro voce tem/teve?"
             else:
                 return "Desculpa, nao entendi a sua resposta! pode dizer sim ou nao?"
-        elif step == "awaiting_tempo_seguro_anterior":
-            session['data']['tempo_seguro_anterior'] = message
+        elif session.cliente_substage == "awaiting_tempo_seguro_anterior":
+            session.cliente_seguro_anterior = message
             return self.concluir_cotacao(phone_number)
         
     def concluir_cotacao(self, phone_number):
@@ -293,13 +253,10 @@ class ConversationFlow:
         return "Muito obrigado! Você completou a cotação. Todas as suas informações foram recebidas e em breve um de nossos especialistas te enviará os valores aqui mesmo no WhatsApp."
     
     def reset_session(self, phone_number):
-        if phone_number in self.user_sessions:
-            del self.user_sessions[phone_number]
-        
         cliente = Cliente.query.filter_by(phone_number=phone_number).first()
         if cliente:
             cliente.cliente_stage = 'initial'
-            cliente.cliente_nome = None
+            cliente.cliente_nome = None 
             cliente.cliente_driver = None
             cliente.cliente_driver_state = None
             cliente.cliente_birthdate = None
