@@ -26,7 +26,7 @@ class ConversationFlow:
             cliente.cliente_stage = new_stage
         
         if new_quote_step:
-            cliente.quote_step = new_quote_step
+            cliente.cliente_substage = new_quote_step
         db.session.commit()
 
 
@@ -50,7 +50,6 @@ class ConversationFlow:
             return self.handle_support(phone_number, message)
         else:
             return "Digite reiniciar para começar novamente"
-        
 
     def handle_initial(self, phone_number):
         session = self.get_user_session(phone_number)
@@ -71,6 +70,32 @@ class ConversationFlow:
         
     def handle_quote(self, phone_number, message):
         session = self.get_user_session(phone_number)
+
+        if message.strip().lower() in ["voltar", "back"]:
+            anterior = {
+                "awaiting_birthdate": "awaiting_name",
+                "awaiting_driverlicense": "awaiting_birthdate",
+                "awaiting_driverstate": "awaiting_driverlicense",
+                "awaiting_address": "awaiting_driverstate",
+                "awaiting_veiculos": "awaiting_address",
+                "awaiting_vin": "awaiting_veiculos",
+                "awaiting_financiado": "awaiting_vin",
+                "awaiting_tempo": "awaiting_financiado",
+                "awaiting_outros_motoristas": "awaiting_tempo",
+                "awaiting_qtd_motoristas": "awaiting_outros_motoristas",
+                "awaiting_motorista_birthdate": "awaiting_qtd_motoristas",
+                "awaiting_motorista_driver": "awaiting_motorista_birthdate",
+                "awaiting_motorista_state": "awaiting_motorista_driver",
+                "awaiting_motorista_relacao": "awaiting_motorista_state",
+                "awaiting_seguro_anterior": "awaiting_motorista_relacao",
+                "awaiting_tempo_seguro_anterior": "awaiting_seguro_anterior"
+            }
+            atual = session.cliente_substage
+            if atual in anterior:
+                self.set_stage(session, new_quote_step=anterior[atual])
+                return "Você voltou para o passo anterior. Por favor, informe novamente:"
+            else:
+                return "Não é possível voltar mais."
         #nome do cliente
         if session.cliente_substage == 'awaiting_name':
             session.cliente_nome = message
@@ -256,13 +281,5 @@ class ConversationFlow:
         cliente = Cliente.query.filter_by(phone_number=phone_number).first()
         if cliente:
             cliente.cliente_stage = 'initial'
-            cliente.cliente_nome = None 
-            cliente.cliente_driver = None
-            cliente.cliente_driver_state = None
-            cliente.cliente_birthdate = None
-            cliente.cliente_address = None
-            cliente.cliente_veiculos = []
-            cliente.cliente_motoristas = []
-            cliente.cliente_seguro_anterior = None
             db.session.commit()
             
