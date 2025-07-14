@@ -66,7 +66,7 @@ class ComercialQuoteFlow:
             vin = message.strip()
             if len(vin) != 17:
                 return "O VIN deve ter 17 caracteres. Por favor, verifique e envie novamente."
-            veiculos_lista = session.cliente_veiculos or []
+            veiculos_lista = list(session.cliente_veiculos or [])
             veiculos_lista.append({"vin": vin})
             session.cliente_veiculos = veiculos_lista
 
@@ -77,7 +77,7 @@ class ComercialQuoteFlow:
             financiado = message.strip().lower()
             if financiado not in ["financiado", "quitado"]:
                 return "Por favor, responda apenas 'financiado' ou 'quitado'."
-            veiculos_lista = session.cliente_veiculos
+            veiculos_lista = list(session.cliente_veiculos or [])
             veiculos_lista[-1]["financiado"] = financiado
             session.cliente_veiculos = veiculos_lista
             set_stage(session, new_quote_step='awaiting_tempo')
@@ -89,7 +89,7 @@ class ComercialQuoteFlow:
             if not tempo:
                 return "Por favor, informe há quanto tempo você possui o veículo."
 
-            veiculos_lista = session.cliente_veiculos
+            veiculos_lista = list(session.cliente_veiculos or [])
             veiculos_lista[-1]["tempo"] = tempo
             session.cliente_veiculos = veiculos_lista
 
@@ -122,9 +122,19 @@ class ComercialQuoteFlow:
                 session.motorista_atual = 1
                 session.cliente_motoristas = []
                 set_stage(session, new_quote_step='awaiting_motorista_birthdate')
-                return f"(Motorista extra 1 de {qtd}) Qual a data de nascimento? (use o formato MM/DD/AAAA)"
+                return f"(Motorista extra 1 de {qtd}) Qual o  nome do motorista ?"
             except ValueError:
                 return "Não entendi. Por favor, digite apenas o número de motoristas extras."
+        
+        elif session.cliente_substage == "awaiting_motorista_nome":
+                    nome = message.strip()
+                    if not nome:
+                        return "O nome nao pode ficar em branco"
+                    motorista_lista = list(session.cliente_motoristas or [])
+                    motorista_lista.append({"nome": nome})
+                    session.cliente_motoristas = motorista_lista
+                    set_stage(session, new_quote_step = 'awaiting_motorista_birthdate')
+                    return f"(Passo 8 de 10) ( Motorista extra {session.motorista_atual} de {session.qtd_motorista}) Qual a data de nascimento? (use o formato MM/DD/AAAA)"
 
         elif session.cliente_substage == "awaiting_motorista_birthdate":
             data = parse_data_flexivel(message)
@@ -132,8 +142,8 @@ class ComercialQuoteFlow:
                 if data > datetime.now():
                     return "Data inválida. Por favor, informe uma data de nascimento válida."
                 data_formatada = datetime.strftime(data, "%m/%d/%Y")
-                motorista_lista = session.cliente_motoristas or []
-                motorista_lista.append({"birthdate": data_formatada})
+                motorista_lista = list(session.cliente_motoristas or [])
+                motorista_lista[-1]["birthdate"] = data_formatada
                 session.cliente_motoristas = motorista_lista
                 set_stage(session, new_quote_step='awaiting_motorista_driver')
                 return f"(Motorista extra {session.motorista_atual} de {session.qtd_motoristas}) Qual o número da driver license desse motorista?"
@@ -144,7 +154,7 @@ class ComercialQuoteFlow:
             driverlicense = message.strip()
             if not driverlicense:
                 return "O número da CNH não pode ficar em branco. Por favor, informe corretamente."
-            motorista_lista = session.cliente_motoristas
+            motorista_lista = list(session.cliente_motoristas or [])
             motorista_lista[-1]["driver_license"] = driverlicense
             session.cliente_motoristas = motorista_lista
             set_stage(session, new_quote_step='awaiting_motorista_state')
@@ -154,7 +164,7 @@ class ComercialQuoteFlow:
             driverstate = message.strip()
             if not driverstate:
                 return "O estado da CNH não pode ficar em branco. Por favor, informe corretamente."
-            motorista_lista = session.cliente_motoristas
+            motorista_lista = list(session.cliente_motoristas or [])
             motorista_lista[-1]["driver_license_state"] = driverstate
             session.cliente_motoristas = motorista_lista
 
