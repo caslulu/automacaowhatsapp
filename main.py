@@ -1,4 +1,3 @@
-
 from flask import Flask, request
 from twilio.twiml.messaging_response import MessagingResponse
 from conversation_service import ConversationFlow
@@ -11,7 +10,6 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db.init_app(app)
 
-
 conversation_flow = ConversationFlow()
 
 @app.route("/webhook", methods=["POST"])
@@ -19,8 +17,7 @@ def webhook():
     incoming_msg = request.values.get('Body', '')
     phone_number = request.values.get('From', '')
     response = MessagingResponse()
-
-    # processa a mensagem usando o ConversationFlow
+    
     reply = conversation_flow.process_message(phone_number, incoming_msg)
     response.message(reply)
     return str(response)

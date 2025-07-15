@@ -6,7 +6,6 @@ from quotes.moto_quote_flow import MotoQuoteFlow
 from trello_service import Trello
 
 
-
 class ConversationFlow:
     def __init__(self):
         self.trello_service = Trello()
@@ -20,7 +19,6 @@ class ConversationFlow:
             cliente = Cliente(phone_number=phone_number, cliente_stage='initial')
             db.session.add(cliente)
             db.session.commit()
-            cliente._imagens_memoria = []
         return cliente
 
     def set_stage(self, cliente, new_stage=None, new_quote_step=None):
@@ -33,23 +31,13 @@ class ConversationFlow:
 
 
     
-    def process_message(self, phone_number, message, image_file=None):
-
+    def process_message(self, phone_number, message):
+        session = self.get_user_session(phone_number)
+        
         if message.strip().lower() in ["reiniciar", "restart"]:
             self.reset_session(phone_number)
             return "Conversa reiniciada, Digite um 'oi' para começar novamente."
-        
-        session = self.get_user_session(phone_number)
         stage = session.cliente_stage
-        
-        if image_file and stage != "quote":
-            return "Desculpa, nao entendi. Eu entendo apenas mensagens de texto."
-
-        elif image_file and stage == "quote":
-            if not hasattr(session, "_imagens_memoria"):
-                session._imagens_memoria = []
-            session._imagens_memoria.append(image_file)
-            return "Obrigado! Recebi a sua imagem. Agora, responda a pergunta anterior."
         if stage == 'initial':
             return self.handle_initial(phone_number)
         elif stage == 'waiting_option':
@@ -73,7 +61,7 @@ class ConversationFlow:
         session = self.get_user_session(phone_number)
         if "1" in message or "quote" in message or "cotacao" in message:
             self.set_stage(session, new_stage='waiting_type')
-            return "Escolha o tipo de cotação que você deseja: 1-Carro\n 2-Comercial\n 3-Moto"
+            return "Escolha o tipo de cotação que você deseja:\n1-Carro\n 2-Comercial\n 3-Moto"
         
         elif "2" in message or "suporte" in message:
             self.set_stage(session, new_stage='suporte')
@@ -110,10 +98,11 @@ class ConversationFlow:
             return self.moto_quote.handle(phone_number, message, session, self.set_stage, self.concluir_cotacao)
 
         
-    def concluir_cotacao(self, phone_number, imagens_files=None):
+    def concluir_cotacao(self, phone_number):
         session = self.get_user_session(phone_number)
         if not session:
             return "Erro para localizar o cliente para enviar ao Trello. Um especialista ira te ajudar!"
+        
         dados = {
             "nome": session.cliente_nome,
             "documento": f"{session.cliente_driver} - {session.cliente_driver_state}",
@@ -125,7 +114,6 @@ class ConversationFlow:
             "pessoas": session.cliente_motoristas,
             "email": self.trello_service.gerar_email(session.cliente_nome),
             "tipo_cotacao": session.tipo_cotacao,
-            #campos para comercial
             "empresa_nome": getattr(session, "empresa_nome", ""),
             "empresa_usdot": getattr(session, "empresa_usdot", ""),
             "empresa_numero_registro": getattr(session, "empresa_numero_registro", ""),
@@ -135,10 +123,8 @@ class ConversationFlow:
             "empresa_endereco": getattr(session, "empresa_endereco", ""),
             "empresa_milhas_trabalho": getattr(session, "empresa_milhas_trabalho", ""),
             "empresa_milhas_ano": getattr(session, "empresa_milhas_ano", "")
-
         }
-        imagens_files = getattr(session, "_imagens_memoria", [])
-        self.trello_service.criar_carta_e_anexar_imagem(dados, imagens_files)
+        self.trello_service.criar_carta(**dados)
         self.reset_session(phone_number)
         return "Muito obrigado! Você completou a cotação. Todas as suas informações foram recebidas e em breve um de nossos especialistas te enviará os valores aqui mesmo no WhatsApp."
     
@@ -146,7 +132,6 @@ class ConversationFlow:
         cliente = Cliente.query.filter_by(phone_number=phone_number).first()
         if cliente:
             cliente.cliente_stage = 'initial'
+            cliente.cliente_substage = None
+            cliente.tipo_cotacao = None
             db.session.commit()
-        if hasattr(cliente, "_imagens_memoria"):
-            del cliente._imagens_memoria
-            
