@@ -8,6 +8,7 @@ class Cliente(db.Model):
     cliente_stage: Mapped[str] = mapped_column(nullable=True)
     cliente_substage: Mapped[str] = mapped_column(nullable=True)
     tipo_cotacao: Mapped[str] = mapped_column(nullable=True)
+    language: Mapped[str] = mapped_column(nullable=True)
 
     ##### COTACAO PARA VEICULOS
     cliente_nome: Mapped[str] = mapped_column(nullable=True)
