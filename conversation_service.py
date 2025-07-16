@@ -114,6 +114,7 @@ class ConversationFlow:
             "pessoas": session.cliente_motoristas,
             "email": self.trello_service.gerar_email(session.cliente_nome),
             "tipo_cotacao": session.tipo_cotacao,
+            #se a cotação for comercial:
             "empresa_nome": getattr(session, "empresa_nome", ""),
             "empresa_usdot": getattr(session, "empresa_usdot", ""),
             "empresa_numero_registro": getattr(session, "empresa_numero_registro", ""),
