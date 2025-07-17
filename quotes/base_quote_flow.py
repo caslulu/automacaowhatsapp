@@ -72,7 +72,7 @@ class BaseQuoteFlow:
         lang = getattr(session, 'language', 'pt')
         session.cliente_address = message
         set_stage(session, new_quote_step="awaiting_tempo_endereco")
-        return self.texts["tempo_endereco"][lang] if 'tempo_endereco' in self.texts else ''
+        return self.texts["tempo_endereco"][lang]
 
     def handle_tempo_address(self, session, message, set_stage):
         lang = getattr(session, 'language', 'pt')
@@ -98,7 +98,7 @@ class BaseQuoteFlow:
         lang = getattr(session, 'language', 'pt')
         vin = message.strip()
         if len(vin) != 17:
-            return self.texts["vin_erro"][lang] if 'vin_erro' in self.texts else ''
+            return self.texts["vin_erro"][lang]
         session.cliente_veiculos.append({"vin": vin})
         flag_modified(session, "cliente_veiculos")
         set_stage(session, new_quote_step='awaiting_financiado')

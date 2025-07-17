@@ -9,9 +9,9 @@ from trello_service import Trello
 class ConversationFlow:
     texts = {
         'select_language': {
-            'pt': "Se deseja conversar em português, selecione 1\nIf you would like to speak in English, press 2\nSi desea hablar en español, presione 3.",
-            'en': "If you would like to speak in English, press 2\nSe deseja conversar em português, selecione 1\nSi desea hablar en español, presione 3.",
-            'es': "Si desea hablar en español, presione 3.\nSe deseja conversar em português, selecione 1\nIf you would like to speak in English, press 2."
+            'pt': "Se deseja conversar em português, selecione 1\n",
+            'en': "If you would like to speak in English, press 2\n",
+            'es': "Si desea hablar en español, presione 3.\n"
         },
         'initial': {
             'pt': "Olá! Como posso ajudar você?\n1- Cotação para veículo\n2- Suporte\nPara voltar para o início, digite reiniciar.",
@@ -79,7 +79,7 @@ class ConversationFlow:
     def __init__(self):
         self.trello_service = Trello()
         self.auto_quote = AutoQuoteFlow()
-        self.comemercial_quote = ComercialQuoteFlow()
+        self.comercial_quote = ComercialQuoteFlow()
         self.moto_quote = MotoQuoteFlow()    
     def get_user_session(self, phone_number):
         cliente = Cliente.query.filter_by(phone_number=phone_number).first()
@@ -104,6 +104,9 @@ class ConversationFlow:
         session = self.get_user_session(phone_number)
         lang = getattr(session, 'language', 'pt')
 
+        if not message:
+            return "Desculpa, eu entendo apenas mensagem de texto"
+
         if message.strip().lower() in ["reiniciar", "restart"]:
             self.reset_session(phone_number)
             return self.texts['restart'][lang]
@@ -111,6 +114,8 @@ class ConversationFlow:
         stage = session.cliente_stage
         if stage == "select_language":
             return self.handle_select_language(phone_number)
+        elif stage == "waiting_language":
+            return self.handle_option_language(phone_number, message)
         elif stage == 'initial':
             return self.handle_initial(phone_number)
         elif stage == 'waiting_option':
@@ -143,8 +148,11 @@ class ConversationFlow:
             session.language = "es"
         else:
             lang = getattr(session, 'language', 'pt')
+            if lang not in ['pt', 'en', 'es']:
+                lang = 'pt'
             return self.texts['language_error'][lang]
         self.set_stage(session, new_stage='initial')
+        return self.handle_initial(phone_number)
 
     def handle_initial(self, phone_number):
         session = self.get_user_session(phone_number)

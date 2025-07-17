@@ -5,7 +5,7 @@ class ComercialQuoteFlow(BaseQuoteFlow):
         'birthdate': {
             'pt': "(Passo 2 de 10) Obrigado! Agora, qual a sua data de nascimento? (use o formato MM/DD/AAAA)",
             'en': "(Step 2 of 10) Thank you! Now, what is your date of birth? (use MM/DD/YYYY)",
-            'es': "(Paso 2 de 10) ¡Gracias! Ahora, ¿cuál es su fecha de nacimiento? (use MM/DD/AAAA)"
+            'es': "(Paso 2 de 10) ¡Gracias! Agora, ¿cuál es su fecha de nacimiento? (use MM/DD/AAAA)"
         },
         'birthdate_error': {
             'pt': "Ops! parece que você digitou a data de nascimento errada, tem como corrigir?",
@@ -30,7 +30,7 @@ class ComercialQuoteFlow(BaseQuoteFlow):
         'driverlicense': {
             'pt': "(Passo 3 de 10) Obrigado! Agora, qual o número da sua driver license ou cnh?",
             'en': "(Step 3 of 10) Thank you! Now, what is your driver license or CNH number?",
-            'es': "(Paso 3 de 10) ¡Gracias! Ahora, ¿cuál es su número de licencia de conducir o CNH?"
+            'es': "(Paso 3 de 10) ¡Gracias! Agora, ¿cuál es su número de licencia de conducir o CNH?"
         },
         'driver_state': {
             'pt': "(Passo 4 de 10) Perfeito! Poderia me dizer qual o estado da sua driver license? (Se for internacional, diga internacional)",
@@ -40,12 +40,12 @@ class ComercialQuoteFlow(BaseQuoteFlow):
         'motorista_driver_erro': {
             'pt': "O número da CNH não pode ficar em branco. Por favor, informe corretamente.",
             'en': "The driver license number cannot be blank. Please provide it correctly.",
-            'es': "El número de la licencia de conducir no puede estar en blanco. Por favor, infórmelo correctamente."
+            'es': "El número de la licencia de conducir no puede estar en blanco. Por favor, infórmelo corretamente."
         },
         'motorista_driver_state_erro': {
             'pt': "O estado da CNH não pode ficar em branco. Por favor, informe corretamente.",
             'en': "The driver license state cannot be blank. Please provide it correctly.",
-            'es': "El estado de la licencia de conducir no puede estar en blanco. Por favor, infórmelo correctamente."
+            'es': "El estado de la licencia de conducir no puede estar en blanco. Por favor, infórmelo corretamente."
         },
         'relacao_vazia_erro': {
             'pt': "A relação não pode ficar em branco. Por favor, informe corretamente (Ex: funcionário, sócio, etc).",
@@ -111,9 +111,30 @@ class ComercialQuoteFlow(BaseQuoteFlow):
             'pt': "Não entendi. Por favor, digite apenas o número de motoristas extras.",
             'en': "I didn't understand. Please enter only the number of extra drivers.",
             'es': "No entendí. Por favor, ingrese solo el número de conductores adicionales."
+        },
+        'tempo_endereco': {
+            'pt': "(Passo 6 de 10) Okay! Poderia me dizer quanto tempo você mora nesse endereço atual?",
+            'en': "(Step 6 of 10) Okay! How long have you lived at your current address?",
+            'es': "(Paso 6 de 10) ¡Bien! ¿Cuánto tiempo ha vivido en esta dirección atual?"
+        },
+
+        'cadastrar_outros_motoristas_erro': {
+            'pt': "Não entendi sua resposta. Por favor, responda com 'sim' ou 'não'.",
+            'en': "I didn't understand your answer. Please reply with 'yes' or 'no'.",
+            'es': "No entendí su respuesta. Por favor, responda con 'sí' o 'no'."
         }
     }
 
+    def handle_outros_motoristas(self, session, message, set_stage):
+        lang = getattr(session, 'language', 'pt')
+        if "sim" in message.strip().lower() or "yes" in message.strip().lower():
+            set_stage(session, new_quote_step='awaiting_qtd_motoristas')
+            return self.texts['quantos_motoristas'][lang]
+        elif "nao" in message.strip().lower() or "no" in message.strip().lower():
+            set_stage(session, new_quote_step='awaiting_nome_empresa')
+            return self.texts['sem_outros_motoristas'][lang]
+        else:
+            return self.texts['cadastrar_outros_motoristas_erro']
     def handle_back(self, session, set_stage):
         if session.cliente_substage == 'awaiting_nome_empresa':
             set_stage(session, new_quote_step='awaiting_outros_motoristas')
@@ -153,7 +174,10 @@ class ComercialQuoteFlow(BaseQuoteFlow):
             return self.handle_driverstate(session, message, set_stage)
 
         elif session.cliente_substage == 'awaiting_address':
-            return self.handle_address(session, message, set_stage)
+            # Após o endereço do cliente, pedir o endereço comercial
+            self.handle_address(session, message, set_stage)
+            set_stage(session, new_quote_step='awaiting_comercial_address')
+            return self.texts['comercial_address'][lang]
 
         # Etapa específica do comercial
         elif session.cliente_substage == "awaiting_comercial_address":
@@ -166,10 +190,7 @@ class ComercialQuoteFlow(BaseQuoteFlow):
 
         # Delegar etapas de veículos e motoristas para métodos herdados
         elif session.cliente_substage == "awaiting_veiculos":
-            return self.handle_qtd_veiculos(session, message, set_stage)
-
-        elif session.cliente_substage == "awaiting_vin":
-            result = self.handle_vin(session, message, set_stage)
+            result = self.handle_qtd_veiculos(session, message, set_stage)
             if result is True:
                 return {
                     'pt': f"(Passo 7 de 10) (Veículo 1 de {session.qtd_veiculos}) Qual o VIN do veículo?",
@@ -178,13 +199,23 @@ class ComercialQuoteFlow(BaseQuoteFlow):
                 }[lang]
             return result
 
-        elif session.cliente_substage == "awaiting_financiado":
-            result = self.handle_financiado(session, message, set_stage)
+        elif session.cliente_substage == "awaiting_vin":
+            result = self.handle_vin(session, message, set_stage)
             if result is True:
                 return {
                     'pt': f"(Passo 7 de 10) (Veículo {session.veiculo_atual} de {session.qtd_veiculos}) O veículo é financiado ou quitado?",
                     'en': f"(Step 7 of 10) (Vehicle {session.veiculo_atual} of {session.qtd_veiculos}) Is the vehicle financed or paid off?",
-                    'es': f"(Paso 7 de 10) (Vehículo {session.veiculo_atual} de {session.qtd_veiculos}) ¿El vehículo está financiado o pagado?"
+                    'es': f"(Paso 7 de 10) (Vehículo {session.veiculo_atual} de {session.qtd_veiculos}) ¿El veículo está financiado ou pagado?"
+                }[lang]
+            return result
+
+        elif session.cliente_substage == "awaiting_financiado":
+            result = self.handle_financiado(session, message, set_stage)
+            if result is True:
+                return {
+                    'pt': f"(Passo 7 de 10) (Veículo {session.veiculo_atual} de {session.qtd_veiculos}) Há quanto tempo possui o veículo?",
+                    'en': f"(Step 7 of 10) (Vehicle {session.veiculo_atual} of {session.qtd_veiculos}) How long have you owned the vehicle?",
+                    'es': f"(Paso 7 de 10) (Vehículo {session.veiculo_atual} de {session.qtd_veiculos}) ¿Cuánto tempo ha tenido el veículo?"
                 }[lang]
             return result
 
@@ -195,7 +226,7 @@ class ComercialQuoteFlow(BaseQuoteFlow):
                     return {
                         'pt': f"(Passo 7 de 10) (Veículo {session.veiculo_atual} de {session.qtd_veiculos}) Qual o VIN do veículo?",
                         'en': f"(Step 7 of 10) (Vehicle {session.veiculo_atual} of {session.qtd_veiculos}) What is the vehicle's VIN?",
-                        'es': f"(Paso 7 de 10) (Vehículo {session.veiculo_atual} de {session.qtd_veiculos}) ¿Cuál es el VIN del vehículo?"
+                        'es': f"(Paso 7 de 10) (Vehículo {session.veiculo_atual} de {session.qtd_veiculos}) ¿Cuál é el VIN del veículo?"
                     }[lang]
                 else:
                     return self.texts['cadastrar_outros_motoristas'][lang]
@@ -205,10 +236,7 @@ class ComercialQuoteFlow(BaseQuoteFlow):
             return self.handle_outros_motoristas(session, message, set_stage)
 
         elif session.cliente_substage == "awaiting_qtd_motoristas":
-            return self.handle_qtd_motoristas(session, message, set_stage)
-
-        elif session.cliente_substage == "awaiting_motorista_nome":
-            result = self.handle_nome_motoristas(session, message, set_stage)
+            result = self.handle_qtd_motoristas(session, message, set_stage)
             if result is True:
                 return {
                     'pt': f"(Passo 8 de 10) (Motorista extra 1 de {session.qtd_motoristas}) Qual o nome do motorista extra?",
@@ -217,9 +245,10 @@ class ComercialQuoteFlow(BaseQuoteFlow):
                 }[lang]
             return result
 
-        elif session.cliente_substage == "awaiting_motorista_birthdate":
-            result = self.handle_birthdate_motoristas(session, message, set_stage)
+        elif session.cliente_substage == "awaiting_motorista_nome":
+            result = self.handle_nome_motoristas(session, message, set_stage)
             if result is True:
+                set_stage(session, new_quote_step="awaiting_motorista_birthdate")
                 return {
                     'pt': f"(Passo 8 de 10) (Motorista extra {session.motorista_atual} de {session.qtd_motoristas}) Qual a data de nascimento? (use o formato MM/DD/AAAA)",
                     'en': f"(Step 8 of 10) (Extra driver {session.motorista_atual} of {session.qtd_motoristas}) What is the date of birth? (use MM/DD/YYYY)",
@@ -227,9 +256,10 @@ class ComercialQuoteFlow(BaseQuoteFlow):
                 }[lang]
             return result
 
-        elif session.cliente_substage == "awaiting_motorista_driver":
-            result = self.handle_driver_motoristas(session, message, set_stage)
+        elif session.cliente_substage == "awaiting_motorista_birthdate":
+            result = self.handle_birthdate_motoristas(session, message, set_stage)
             if result is True:
+                set_stage(session, new_quote_step="awaiting_motorista_driver")
                 return {
                     'pt': f"(Passo 8 de 10) (Motorista extra {session.motorista_atual} de {session.qtd_motoristas}) Qual o número da driver license desse motorista?",
                     'en': f"(Step 8 of 10) (Extra driver {session.motorista_atual} of {session.qtd_motoristas}) What is this driver's license number?",
@@ -237,13 +267,23 @@ class ComercialQuoteFlow(BaseQuoteFlow):
                 }[lang]
             return result
 
-        elif session.cliente_substage == "awaiting_motorista_state":
-            result = self.handle_driver_motoristas_state(session, message, set_stage)
+        elif session.cliente_substage == "awaiting_motorista_driver":
+            result = self.handle_driver_motoristas(session, message, set_stage)
             if result is True:
                 return {
                     'pt': f"(Passo 8 de 10) (Motorista extra {session.motorista_atual} de {session.qtd_motoristas}) Qual o estado da driver license desse motorista?",
                     'en': f"(Step 8 of 10) (Extra driver {session.motorista_atual} of {session.qtd_motoristas}) What is this driver's license state?",
                     'es': f"(Paso 8 de 10) (Conductor extra {session.motorista_atual} de {session.qtd_motoristas}) ¿Cuál es el estado de la licencia de conducir de este conductor?"
+                }[lang]
+            return result
+
+        elif session.cliente_substage == "awaiting_motorista_state":
+            result = self.handle_driver_motoristas_state(session, message, set_stage)
+            if result is True:
+                return {
+                    'pt': f"(Passo 8 de 10) (Motorista extra {session.motorista_atual} de {session.qtd_motoristas}) Qual a relação desse motorista com a empresa? (Ex: funcionário, sócio, etc)",
+                    'en': f"(Step 8 of 10) (Extra driver {session.motorista_atual} of {session.qtd_motoristas}) What is this driver's relationship to the company? (e.g., employee, partner, etc)",
+                    'es': f"(Paso 8 de 10) (Conductor extra {session.motorista_atual} de {session.qtd_motoristas}) ¿Cuál es la relación de este conductor com a empresa? (Ej: empleado, socio, etc)"
                 }[lang]
             return result
 
@@ -257,7 +297,8 @@ class ComercialQuoteFlow(BaseQuoteFlow):
                         'es': f"(Paso 8 de 10) (Conductor extra {session.motorista_atual+1} de {session.qtd_motoristas}) ¿Cuál es el nombre del conductor extra?"
                     }[lang]
                 else:
-                    return self.texts['tem_seguro_anterior'][lang]
+                    set_stage(session, new_quote_step='awaiting_nome_empresa')
+                    return "Agora, qual o nome da empresa?"
             return result
 
         # Etapas finais específicas do comercial

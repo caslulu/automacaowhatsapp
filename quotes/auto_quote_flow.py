@@ -1,4 +1,4 @@
-from base_quote_flow import BaseQuoteFlow
+from quotes.base_quote_flow import BaseQuoteFlow
 
 class AutoQuoteFlow(BaseQuoteFlow):
     texts = {
@@ -137,6 +137,7 @@ class AutoQuoteFlow(BaseQuoteFlow):
         lang = getattr(session, 'language', 'pt')
         if message.strip().lower() in ["voltar", "back"]:
             self.handle_back(session, set_stage)
+            #nome do cliente
 
         if session.cliente_substage == 'awaiting_name':
             return self.handle_nome(session, message, set_stage)
@@ -168,12 +169,8 @@ class AutoQuoteFlow(BaseQuoteFlow):
 
         elif session.cliente_substage == "awaiting_vin":
             result = self.handle_vin(session, message, set_stage)
-            if result is True:
-                return {
-                    'pt': f"(Passo 7 de 10) (Veículo {session.veiculo_atual} de {session.qtd_veiculos}) O veículo é financiado ou quitado?",
-                    'en': f"(Step 7 of 10) (Vehicle {session.veiculo_atual} of {session.qtd_veiculos}) Is the vehicle financed or paid off?",
-                    'es': f"(Paso 7 de 10) (Vehículo {session.veiculo_atual} de {session.qtd_veiculos}) ¿El vehículo está financiado o pagado?"
-                }[lang]
+            if result == True: 
+                return f"(Passo 7 de 10) (Veículo {session.veiculo_atual} de {session.qtd_veiculos}) O veículo é financiado ou quitado?"
             return result
 
         elif session.cliente_substage == "awaiting_financiado":
@@ -189,14 +186,12 @@ class AutoQuoteFlow(BaseQuoteFlow):
         elif session.cliente_substage == "awaiting_tempo":
             result = self.handle_tempo(session, message, set_stage)
             if result is True:
-                if session.veiculo_atual < session.qtd_veiculos:
-                    return {
-                        'pt': f"(Passo 7 de 10) (Veículo {session.veiculo_atual} de {session.qtd_veiculos}) Qual o VIN do veículo?",
-                        'en': f"(Step 7 of 10) (Vehicle {session.veiculo_atual} of {session.qtd_veiculos}) What is the vehicle's VIN?",
-                        'es': f"(Paso 7 de 10) (Vehículo {session.veiculo_atual} de {session.qtd_veiculos}) ¿Cuál es el VIN del vehículo?"
-                    }[lang]
-                else:
-                    return self.texts['cadastrar_outros_motoristas'][lang]
+                # Pergunta o VIN do próximo veículo
+                return {
+                    'pt': f"(Passo 7 de 10) (Veículo {session.veiculo_atual} de {session.qtd_veiculos}) Qual o VIN do veículo?",
+                    'en': f"(Step 7 of 10) (Vehicle {session.veiculo_atual} of {session.qtd_veiculos}) What is the vehicle's VIN?",
+                    'es': f"(Paso 7 de 10) (Vehículo {session.veiculo_atual} de {session.qtd_veiculos}) ¿Cuál es el VIN del vehículo?"
+                }[lang]
             return result
 
         elif session.cliente_substage == "awaiting_outros_motoristas":
