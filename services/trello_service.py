@@ -1,7 +1,7 @@
 import requests
 import os
 from dotenv import load_dotenv
-from data_funcoes import veiculo_vin
+from utils.utility import veiculo_vin
 
 class Trello:
 

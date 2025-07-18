@@ -1,8 +1,8 @@
 from flask import Flask, request
 from twilio.twiml.messaging_response import MessagingResponse
-from conversation_service import ConversationFlow
-from extensions import db
-from model import Cliente
+from services.conversation_service import ConversationFlow
+from utils.extensions import db
+from models.model import Cliente
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///clientes.db'

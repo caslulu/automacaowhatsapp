@@ -1,4 +1,4 @@
-from utility import parse_data_flexivel
+from utils.utility import parse_data_flexivel
 from datetime import datetime
 from sqlalchemy.orm.attributes import flag_modified
 

@@ -1,9 +1,9 @@
-from model import Cliente
-from extensions import db
+from models.model import Cliente
+from utils.extensions import db
 from quotes.auto_quote_flow import AutoQuoteFlow
 from quotes.commercial_quote_flow import ComercialQuoteFlow
 from quotes.moto_quote_flow import MotoQuoteFlow
-from trello_service import Trello
+from services.trello_service import Trello
 
 
 class ConversationFlow:

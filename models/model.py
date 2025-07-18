@@ -1,6 +1,6 @@
 from sqlalchemy import Integer, String, JSON
 from sqlalchemy.orm import Mapped, mapped_column
-from extensions import db
+from utils.extensions import db
 
 
 class Cliente(db.Model):
