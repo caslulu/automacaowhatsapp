@@ -84,4 +84,130 @@ def test_handle_tempo_last_vehicle():
     result = flow.handle_tempo(session, "3 anos", dummy_set_stage)
     assert session.cliente_substage == "awaiting_outros_motoristas"
     assert "Deseja cadastrar outros motoristas?" in result or "seguro" in result.lower()
-    
+
+### QUANTIDADE DE VEICULOS
+
+def test_handle_qtd_veiculos_invalid():
+    flow = AutoQuoteFlow()
+    session = DummySession()
+    session.cliente_substage = 'awaiting_veiculos'
+    result = flow.handle_qtd_veiculos(session, 'zero', dummy_set_stage)
+    assert "número válido" in result
+    assert session.cliente_substage == 'awaiting_veiculos'
+
+def test_handl_qtd_veiculos_menor():
+    flow = AutoQuoteFlow()
+    session = DummySession()
+    session.cliente_substage = 'awaiting_veiculos'
+    result = flow.handle_qtd_veiculos(session, '0', dummy_set_stage)
+    assert "número válido" in result
+    assert session.cliente_substage == 'awaiting_veiculos'
+
+def test_handle_qtd_veiculos_valid():
+    flow = AutoQuoteFlow()
+    session = DummySession()
+    session.cliente_substage = 'awaiting_veiculos'
+    result = flow.handle_qtd_veiculos(session, '1', dummy_set_stage)
+    assert result == True 
+    assert session.cliente_substage == 'awaiting_vin'
+
+### FINANCIADO / QUITADO
+
+def test_handle_financiado_invalid():
+    flow = AutoQuoteFlow()
+    session = DummySession()
+    session.cliente_substage = 'awaiting_financiado'
+    result = flow.handle_financiado(session, 'nao sei', dummy_set_stage)
+    assert "responda apenas 'financiado' ou 'quitado'." in result
+    assert session.cliente_substage == "awaiting_financiado"
+
+def test_handle_financiado_valid():
+    flow = AutoQuoteFlow()
+    session = DummySession()
+    session.cliente_substage = 'awaiting_financiado'
+    session.cliente_veiculos = [{"vin": "12345678901234567"}]
+    result = flow.handle_financiado(session, 'financiado', dummy_set_stage)
+    assert result == True
+    assert session.cliente_veiculos[-1]["financiado"] == "financiado"
+    assert session.cliente_substage == "awaiting_tempo"
+
+
+
+### TAMANHO DO VIN
+def test_handle_vin_size_invalid():
+    flow = AutoQuoteFlow()
+    session = DummySession()
+    session.cliente_substage = 'awaiting_vin'
+    result = flow.handle_vin(session, '01234567', dummy_set_stage)
+    assert "O VIN deve ter 17 caracteres." in result
+    assert session.cliente_substage == 'awaiting_vin'
+
+def test_handle_vin_size_valid():
+    flow = AutoQuoteFlow()
+    session = DummySession()
+    session.cliente_substage = 'awaiting_vin'
+    session.cliente_veiculos = []
+    result = flow.handle_vin(session, '01234567890123456', dummy_set_stage)
+    assert result == True
+    assert session.cliente_substage == 'awaiting_financiado'
+
+
+## TESTE ADIÇÃO MOTORISTA/TRANSIÇÃO
+def test_handle_multiple_motorists():
+    flow = AutoQuoteFlow()
+    session = DummySession()
+    session.qtd_motoristas = 2
+    session.motorista_atual = 1
+    session.cliente_motoristas = [{"nome": "Jose", "birthdate": "02/02/2000", "driver_license": "SA4371431", "driver_license_state": "Massa"}]
+    session.cliente_substage = 'awaiting_relation'
+
+    result = flow.handle_motoristas_relacao(session, "amigo", dummy_set_stage)
+    assert result == True
+    assert session.motorista_atual == 2
+    assert session.cliente_substage == "awaiting_motorista_nome"
+
+def test_handle_last_motorist():
+    flow = AutoQuoteFlow()
+    session = DummySession()
+    session.qtd_motoristas = 1
+    session.motorista_atual = 1
+    session.cliente_motoristas = [{"nome": "Jose", "birthdate": "02/02/2000", "driver_license": "SA4371431", "driver_license_state": "Massa"}]
+    session.cliente_substage = 'awaiting_relation'
+
+    result = flow.handle_motoristas_relacao(session, "amigo", dummy_set_stage)
+    assert session.cliente_substage == "awaiting_seguro_anterior"
+    assert "Agora, você possui seguro atualmente ou teve seguro nos últimos 30 dias?" in result
+
+
+## TEM SEGURO ANTERIOR
+def test_handle_tem_seguro_anterior_invalid():
+    flow = AutoQuoteFlow()
+    session = DummySession()
+    session.cliente_substage = "awaiting_seguro_anterior"
+    def mock_concluir_cotacao(*args, **kwargs): pass
+    phone_number = '1199999999999999'
+    result = flow.handle_tem_seguro_anterior(session, "nao sei dizer", dummy_set_stage, mock_concluir_cotacao, phone_number)
+
+    assert session.cliente_substage == 'awaiting_seguro_anterior'
+    assert "não entendi a sua resposta! pode dizer sim ou não?" in result
+
+def test_handle_tem_seguro_anterior_valid_teve():
+    flow = AutoQuoteFlow()
+    session = DummySession()
+    session.cliente_substage = "awaiting_seguro_anterior"
+    def mock_concluir_cotacao(*args, **kwargs): pass
+    phone_number = '1199999999999999'
+    result = flow.handle_tem_seguro_anterior(session, "sim", dummy_set_stage, mock_concluir_cotacao, phone_number)
+
+    assert session.cliente_substage == 'awaiting_tempo_seguro_anterior'
+    assert "Para finalizar, quanto tempo de seguro você tem/teve?" in result
+
+def test_handle_tem_seguro_anterior_valid_nteve():
+    flow = AutoQuoteFlow()
+    session = DummySession()
+    session.cliente_substage = "awaiting_seguro_anterior"
+    def mock_concluir_cotacao(*args, **kwargs): pass
+    phone_number = '1199999999999999'
+    result = flow.handle_tem_seguro_anterior(session, "nao", dummy_set_stage, mock_concluir_cotacao, phone_number)
+
+    assert session.cliente_substage == 'awaiting_seguro_anterior'

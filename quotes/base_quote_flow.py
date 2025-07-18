@@ -128,10 +128,10 @@ class BaseQuoteFlow:
     def handle_outros_motoristas(self, session, message, set_stage):
         lang = getattr(session, 'language', 'pt')
         resposta = message.lower()
-        if "nao" in resposta or 'não' in resposta or 'n' == resposta:
+        if resposta in ["nao", "não", "n", "0"]:
             set_stage(session, new_quote_step="awaiting_seguro_anterior")
             return self.texts["sem_outros_motoristas"][lang]
-        elif "sim" in resposta or 's' == resposta:
+        elif resposta in ["sim", "s"]:
             set_stage(session, new_quote_step='awaiting_qtd_motoristas')
             return self.texts["quantos_motoristas"][lang]
         else:
@@ -207,9 +207,9 @@ class BaseQuoteFlow:
     
     def handle_tem_seguro_anterior(self, session, message, set_stage, concluir_cotacao, phone_number):
         lang = getattr(session, 'language', 'pt')
-        if "nao" in message.lower() or 'não' in message.lower() or 'n' in message.lower() or "0" in message.lower():
+        if message.strip().lower() in ["nao", "não", "n", "0"]:
             return concluir_cotacao(phone_number)
-        elif "sim" in message.lower() or 's' in message.lower() or "si" in message.lower():
+        elif message.strip().lower() in ["sim", "s", "si"]:
             set_stage(session, new_quote_step='awaiting_tempo_seguro_anterior')
             return self.texts["tempo_seguro_anterior"][lang]
         else:
