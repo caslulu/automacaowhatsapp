@@ -13,9 +13,9 @@ class AutoQuoteFlow(BaseQuoteFlow):
             'es': "¡Ups! Parece que ingresó la fecha de nacimiento incorrecta, ¿puede corregirla?"
         },
         'driverlicense': {
-            'pt': "(Passo 3 de 10) Obrigado! Agora, qual o número da sua driver license ou cnh?",
-            'en': "(Step 3 of 10) Thank you! Now, what is your driver license or CNH number?",
-            'es': "(Paso 3 de 10) ¡Gracias! Ahora, ¿cuál es su número de licencia de conducir o CNH?"
+            'pt': "(Passo 3 de 10) Obrigado! Agora, qual o número da sua driver license, cnh ou passaporte?",
+            'en': "(Step 3 of 10) Thank you! Now, what is your driver license or passporte?",
+            'es': "(Paso 3 de 10) ¡Gracias! Ahora, ¿cuál es su número de licencia de conducir o pasaporte?"
         },
         'driver_state': {
             'pt': "(Passo 4 de 10) Perfeito! Poderia me dizer qual o estado da sua driver license? (Se for internacional, diga internacional)",

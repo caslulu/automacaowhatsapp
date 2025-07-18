@@ -50,12 +50,11 @@ class BaseQuoteFlow:
     def handle_birthdate(self, session, message, set_stage):
         lang = getattr(session, 'language', 'pt')
         data = parse_data_flexivel(message)
-        if data is not None:
+        if data is not None and data < datetime.now():
             session.cliente_birthdate = datetime.strftime(data, '%m/%d/%Y')
             set_stage(session, new_quote_step='awaiting_driverlicense')
             return self.texts['driverlicense'][lang]
-        return self.texts['birthdate_error'][lang] if 'birthdate_error' in self.texts else self.texts['birthdate'][lang]
-
+        return self.texts['birthdate_error'][lang]
     def handle_driverlicense(self, session, message, set_stage):
         lang = getattr(session, 'language', 'pt')
         session.cliente_driver = message
@@ -136,7 +135,7 @@ class BaseQuoteFlow:
             set_stage(session, new_quote_step='awaiting_qtd_motoristas')
             return self.texts["quantos_motoristas"][lang]
         else:
-            return self.texts.get("cadastrar_outros_motoristas_erro", {}).get(lang, self.texts["cadastrar_outros_motoristas"][lang])
+            return self.texts["cadastrar_outros_motoristas"][lang]
     def handle_qtd_motoristas(self, session, message, set_stage):
         lang = getattr(session, 'language', 'pt')
         try:
@@ -163,16 +162,13 @@ class BaseQuoteFlow:
     def handle_birthdate_motoristas(self, session, message, set_stage):
         lang = getattr(session, 'language', 'pt')
         data = parse_data_flexivel(message)
-        if data is not None:
-            if data > datetime.now():
-                return self.texts["data_maior_erro"][lang]
+        if data is not None and data < datetime.now():
             data_formatada = datetime.strftime(data, "%m/%d/%Y")
             session.cliente_motoristas[-1]["birthdate"] = data_formatada
             flag_modified(session, "cliente_motoristas")
             set_stage(session, new_quote_step='awaiting_motorista_driver')
             return True 
-        else:
-            return self.texts["birthdate_invalido"][lang]
+        return self.texts["birthdate_invalido"][lang]
 
     def handle_driver_motoristas(self, session, message, set_stage):
         lang = getattr(session, 'language', 'pt')
