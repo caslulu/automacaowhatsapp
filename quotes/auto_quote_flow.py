@@ -250,14 +250,11 @@ class AutoQuoteFlow(BaseQuoteFlow):
         elif session.cliente_substage == "awaiting_motorista_relacao":
             result = self.handle_motoristas_relacao(session, message, set_stage)
             if result is True:
-                if session.motorista_atual < session.qtd_motoristas:
-                    return {
-                        'pt': f"(Passo 8 de 10) (Motorista extra {session.motorista_atual+1} de {session.qtd_motoristas}) Qual o nome do motorista extra?",
-                        'en': f"(Step 8 of 10) (Extra driver {session.motorista_atual+1} of {session.qtd_motoristas}) What is the extra driver's name?",
-                        'es': f"(Paso 8 de 10) (Conductor extra {session.motorista_atual+1} de {session.qtd_motoristas}) ¿Cuál es el nombre del conductor extra?"
-                    }[lang]
-                else:
-                    return self.texts['tem_seguro_anterior'][lang]
+                return {
+                    'pt': f"(Passo 8 de 10) (Motorista extra {session.motorista_atual} de {session.qtd_motoristas}) Qual o nome do motorista extra?",
+                    'en': f"(Step 8 of 10) (Extra driver {session.motorista_atual} of {session.qtd_motoristas}) What is the extra driver's name?",
+                    'es': f"(Paso 8 de 10) (Conductor extra {session.motorista_atual} de {session.qtd_motoristas}) ¿Cuál es el nombre del conductor extra?"
+                }[lang]
             return result
 
         elif session.cliente_substage == "awaiting_seguro_anterior":

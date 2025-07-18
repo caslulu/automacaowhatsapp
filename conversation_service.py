@@ -213,7 +213,7 @@ class ConversationFlow:
             "documento": f"{session.cliente_driver} - {session.cliente_driver_state}",
             "endereco": session.cliente_address,
             "data_nascimento": session.cliente_birthdate,
-            "tempo_seguro": session.cliente_seguro_anterior,
+            "tempo_de_seguro": session.cliente_seguro_anterior,
             "tempo_no_endereco": session.cliente_tempo_endereco,
             "veiculos": session.cliente_veiculos,
             "pessoas": session.cliente_motoristas,
@@ -241,4 +241,11 @@ class ConversationFlow:
             cliente.cliente_stage = 'initial'
             cliente.cliente_substage = None
             cliente.tipo_cotacao = None
+
+            cliente.cliente_motoristas = None
+            cliente.cliente_seguro_anterior = None
+
+            cliente.empresa_usdot = None
+            cliente.empresa_endereco = None
+
             db.session.commit()

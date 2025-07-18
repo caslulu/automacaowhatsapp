@@ -73,6 +73,7 @@ class Trello:
                     f"\n  Documento: {documento}"
                     f"\n  Data nascimento: {p.get('birthdate', '-') }"
                     f"\n  Parentesco: {p.get('relation', '-') }"
+                    f"\n-------------"
                 )
 
         descricao = (

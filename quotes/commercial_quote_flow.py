@@ -1,5 +1,5 @@
 from quotes.base_quote_flow import BaseQuoteFlow
-
+from sqlalchemy.orm.attributes import flag_modified
 class ComercialQuoteFlow(BaseQuoteFlow):
     texts = {
         'birthdate': {
@@ -122,7 +122,7 @@ class ComercialQuoteFlow(BaseQuoteFlow):
             'pt': "Não entendi sua resposta. Por favor, responda com 'sim' ou 'não'.",
             'en': "I didn't understand your answer. Please reply with 'yes' or 'no'.",
             'es': "No entendí su respuesta. Por favor, responda con 'sí' o 'no'."
-        }
+        },
     }
 
     def handle_outros_motoristas(self, session, message, set_stage):
@@ -135,6 +135,21 @@ class ComercialQuoteFlow(BaseQuoteFlow):
             return self.texts['sem_outros_motoristas'][lang]
         else:
             return self.texts['cadastrar_outros_motoristas_erro']
+
+    def handle_motoristas_relacao(self, session, message, set_stage):
+        lang = getattr(session, 'language', 'pt')
+        relacao = message.strip()
+        if not relacao:
+            return self.texts["relacao_vazia_erro"][lang]
+        session.cliente_motoristas[-1]["relation"] = relacao
+        flag_modified(session, "cliente_motoristas")
+        if session.motorista_atual < session.qtd_motoristas:
+            session.motorista_atual += 1
+            set_stage(session, new_quote_step='awaiting_motorista_nome')
+            return True
+        set_stage(session, new_quote_step='awaiting_nome_empresa')
+        return "Agora, qual o nome da empresa?"
+
     def handle_back(self, session, set_stage):
         if session.cliente_substage == 'awaiting_nome_empresa':
             set_stage(session, new_quote_step='awaiting_outros_motoristas')
@@ -222,14 +237,11 @@ class ComercialQuoteFlow(BaseQuoteFlow):
         elif session.cliente_substage == "awaiting_tempo":
             result = self.handle_tempo(session, message, set_stage)
             if result is True:
-                if session.veiculo_atual < session.qtd_veiculos:
-                    return {
-                        'pt': f"(Passo 7 de 10) (Veículo {session.veiculo_atual} de {session.qtd_veiculos}) Qual o VIN do veículo?",
-                        'en': f"(Step 7 of 10) (Vehicle {session.veiculo_atual} of {session.qtd_veiculos}) What is the vehicle's VIN?",
-                        'es': f"(Paso 7 de 10) (Vehículo {session.veiculo_atual} de {session.qtd_veiculos}) ¿Cuál é el VIN del veículo?"
-                    }[lang]
-                else:
-                    return self.texts['cadastrar_outros_motoristas'][lang]
+                return {
+                    'pt': f"(Passo 7 de 10) (Veículo {session.veiculo_atual} de {session.qtd_veiculos}) Qual o VIN do veículo?",
+                    'en': f"(Step 7 of 10) (Vehicle {session.veiculo_atual} of {session.qtd_veiculos}) What is the vehicle's VIN?",
+                    'es': f"(Paso 7 de 10) (Vehículo {session.veiculo_atual} de {session.qtd_veiculos}) ¿Cuál é el VIN del veículo?"
+                }[lang]
             return result
 
         elif session.cliente_substage == "awaiting_outros_motoristas":
@@ -290,15 +302,11 @@ class ComercialQuoteFlow(BaseQuoteFlow):
         elif session.cliente_substage == "awaiting_motorista_relacao":
             result = self.handle_motoristas_relacao(session, message, set_stage)
             if result is True:
-                if session.motorista_atual < session.qtd_motoristas:
-                    return {
-                        'pt': f"(Passo 8 de 10) (Motorista extra {session.motorista_atual+1} de {session.qtd_motoristas}) Qual o nome do motorista extra?",
-                        'en': f"(Step 8 of 10) (Extra driver {session.motorista_atual+1} of {session.qtd_motoristas}) What is the extra driver's name?",
-                        'es': f"(Paso 8 de 10) (Conductor extra {session.motorista_atual+1} de {session.qtd_motoristas}) ¿Cuál es el nombre del conductor extra?"
-                    }[lang]
-                else:
-                    set_stage(session, new_quote_step='awaiting_nome_empresa')
-                    return "Agora, qual o nome da empresa?"
+                return {
+                    'pt': f"(Passo 8 de 10) (Motorista extra {session.motorista_atual+1} de {session.qtd_motoristas}) Qual o nome do motorista extra?",
+                    'en': f"(Step 8 of 10) (Extra driver {session.motorista_atual+1} of {session.qtd_motoristas}) What is the extra driver's name?",
+                    'es': f"(Paso 8 de 10) (Conductor extra {session.motorista_atual+1} de {session.qtd_motoristas}) ¿Cuál es el nombre del conductor extra?"
+                }[lang]
             return result
 
         # Etapas finais específicas do comercial

@@ -42,7 +42,7 @@ class MotoQuoteFlow(BaseQuoteFlow):
             'en': "The VIN must be 17 characters. Please check and send again.",
             'es': "El VIN debe tener 17 caracteres. Por favor, verifique y envíe nuevamente."
         },
-        'financiad_erro': {
+        'financiado_erro': {
             'pt': "Por favor, responda apenas 'financiado' ou 'quitado'.",
             'en': "Please answer only 'financed' or 'paid off'.",
             'es': "Por favor, responda solo 'financiado' o 'pagado'."
@@ -140,6 +140,9 @@ class MotoQuoteFlow(BaseQuoteFlow):
         elif session.cliente_substage == 'awaiting_address':
             return self.handle_address(session, message, set_stage)
 
+        elif session.cliente_substage == "awaiting_tempo_endereco": 
+            return self.handle_tempo_address(session, message, set_stage)
+
         elif session.cliente_substage == 'awaiting_veiculos':
             result = self.handle_qtd_veiculos(session, message, set_stage)
             if result is True:
@@ -173,14 +176,11 @@ class MotoQuoteFlow(BaseQuoteFlow):
         elif session.cliente_substage == 'awaiting_tempo':
             result = self.handle_tempo(session, message, set_stage)
             if result is True:
-                if session.veiculo_atual < session.qtd_veiculos:
-                    return {
-                        'pt': f"(Passo 7 de 10) (Moto {session.veiculo_atual} de {session.qtd_veiculos}) Qual o VIN da moto?",
-                        'en': f"(Step 7 of 10) (Motorcycle {session.veiculo_atual} of {session.qtd_veiculos}) What is the motorcycle's VIN?",
-                        'es': f"(Paso 7 de 10) (Moto {session.veiculo_atual} de {session.qtd_veiculos}) ¿Cuál es el VIN de la moto?"
-                    }[lang]
-                else:
-                    return self.texts['cadastrar_outros_motoristas'][lang]
+                return {
+                    'pt': f"(Passo 7 de 10) (Moto {session.veiculo_atual} de {session.qtd_veiculos}) Qual o VIN da moto?",
+                    'en': f"(Step 7 of 10) (Motorcycle {session.veiculo_atual} of {session.qtd_veiculos}) What is the motorcycle's VIN?",
+                    'es': f"(Paso 7 de 10) (Moto {session.veiculo_atual} de {session.qtd_veiculos}) ¿Cuál es el VIN de la moto?"
+                }[lang]
             return result
 
         elif session.cliente_substage == 'awaiting_outros_motoristas':
@@ -240,14 +240,11 @@ class MotoQuoteFlow(BaseQuoteFlow):
         elif session.cliente_substage == 'awaiting_motorista_relacao':
             result = self.handle_motoristas_relacao(session, message, set_stage)
             if result is True:
-                if session.motorista_atual < session.qtd_motoristas:
-                    return {
-                        'pt': f"(Passo 9 de 10) Qual o nome do motorista extra {session.motorista_atual+1}?",
-                        'en': f"(Step 9 of 10) What is the name of extra driver {session.motorista_atual+1}?",
-                        'es': f"(Paso 9 de 10) ¿Cuál es el nombre del conductor extra {session.motorista_atual+1}?"
-                    }[lang]
-                else:
-                    return self.texts['tem_seguro_anterior'][lang]
+                return {
+                    'pt': f"(Passo 9 de 10) Qual o nome do motorista extra {session.motorista_atual}?",
+                    'en': f"(Step 9 of 10) What is the name of extra driver {session.motorista_atual}?",
+                    'es': f"(Paso 9 de 10) ¿Cuál es el nombre del conductor extra {session.motorista_atual}?"
+                }[lang]
             return result
 
         elif session.cliente_substage == 'awaiting_seguro_anterior':

@@ -106,8 +106,8 @@ class BaseQuoteFlow:
     def handle_financiado(self, session, message, set_stage):
         lang = getattr(session, 'language', 'pt')
         financiado = message.strip().lower()
-        if financiado not in ["financiado", "quitado"]:
-            return self.texts.get('financiado_erro', self.texts.get('financiad_erro', {})).get(lang, '')
+        if financiado not in ["financiado", "quitado", "financiada", "quitada"]:
+            return self.texts["financiado_erro"][lang]
         session.cliente_veiculos[-1]["financiado"] = financiado
         flag_modified(session, "cliente_veiculos")
         set_stage(session, new_quote_step='awaiting_tempo')
