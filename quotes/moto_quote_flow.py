@@ -107,7 +107,7 @@ class MotoQuoteFlow(BaseQuoteFlow):
             'en': "The relationship cannot be blank. Please provide it correctly (e.g., son, wife, friend...).",
             'es': "La relación no puede estar en blanco. Por favor, infórmela correctamente (Ej: hijo, esposa, amigo...)."
         },
-        'tem_seguro_anterior': {
+        'tempo_seguro_anterior': {
             'pt': "(Passo 10 de 10) Para finalizar, quanto tempo de seguro você tem/teve?",
             'en': "(Step 10 of 10) To finish, how long have you had insurance?",
             'es': "(Paso 10 de 10) Para finalizar, ¿cuánto tiempo de seguro ha tenido?"
@@ -116,6 +116,16 @@ class MotoQuoteFlow(BaseQuoteFlow):
             'pt': "Desculpa, não entendi a sua resposta! pode dizer sim ou não?",
             'en': "Sorry, I didn't understand your answer! Can you say yes or no?",
             'es': "Disculpa, ¡no entendí su respuesta! ¿Puede decir sí o no?"
+        },
+        'birthdate_error': {
+            'pt': "Ops! parece que você digitou a data de nascimento errada, tem como corrigir?",
+            'en': "Oops! It looks like you entered the wrong date of birth, can you correct it?",
+            'es': "¡Ups! Parece que ingresó la fecha de nacimiento incorrecta, ¿puede corregirla?"
+        },
+        'tem_seguro_anterior': {
+            'pt': "(Passo 9 de 10) Todos os motoristas extras foram cadastrados! Agora, você possui seguro atualmente ou teve seguro nos últimos 30 dias?",
+            'en': "(Step 9 of 10) All extra drivers have been registered! Now, do you currently have insurance or have you had insurance in the last 30 days?",
+            'es': "(Paso 9 de 10) ¡Todos los conductores adicionales han sido registrados! Ahora, ¿tiene seguro actualmente o ha tenido seguro en los últimos 30 días?"
         }
     }
 
