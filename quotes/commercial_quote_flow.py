@@ -150,6 +150,12 @@ class ComercialQuoteFlow(BaseQuoteFlow):
         set_stage(session, new_quote_step='awaiting_nome_empresa')
         return "Agora, qual o nome da empresa?"
 
+    def handle_address(self, session, message, set_stage):
+        lang = getattr(session, 'language', 'pt')
+        session.cliente_address = message
+        set_stage(session, new_quote_step="awaiting_comercial_address")
+        return self.texts["comercial_address"][lang]
+
     def handle_back(self, session, set_stage):
         if session.cliente_substage == 'awaiting_nome_empresa':
             set_stage(session, new_quote_step='awaiting_outros_motoristas')
@@ -191,7 +197,6 @@ class ComercialQuoteFlow(BaseQuoteFlow):
         elif session.cliente_substage == 'awaiting_address':
             # Após o endereço do cliente, pedir o endereço comercial
             self.handle_address(session, message, set_stage)
-            set_stage(session, new_quote_step='awaiting_comercial_address')
             return self.texts['comercial_address'][lang]
 
         # Etapa específica do comercial
