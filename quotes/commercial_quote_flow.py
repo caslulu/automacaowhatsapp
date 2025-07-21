@@ -123,6 +123,16 @@ class ComercialQuoteFlow(BaseQuoteFlow):
             'en': "I didn't understand your answer. Please reply with 'yes' or 'no'.",
             'es': "No entendí su respuesta. Por favor, responda con 'sí' o 'no'."
         },
+        'vin_confirmacao_erro': {
+            'pt': "Ok, vamos tentar novamente. Por favor, digite o VIN do veículo que deseja adicionar.",
+            'en': "Okay, let's try again. Please enter the VIN of the vehicle you want to add.",
+            'es': "Bien, intentemos de nuevo. Por favor, ingrese el VIN del vehículo que desea agregar."
+        },
+        'tem_seguro_anterior_erro': {
+            'pt': "Desculpa, não entendi a sua resposta! pode dizer sim ou não?",
+            'en': "Sorry, I didn't understand your answer! Can you say yes or no?",
+            'es': "Disculpa, ¡no entendí su respuesta! ¿Puede decir sí o no?"
+        },
     }
 
     def handle_outros_motoristas(self, session, message, set_stage):
@@ -220,12 +230,15 @@ class ComercialQuoteFlow(BaseQuoteFlow):
             return result
 
         elif session.cliente_substage == "awaiting_vin":
-            result = self.handle_vin(session, message, set_stage)
-            if result is True:
+            return self.handle_vin(session, message, set_stage)
+
+        elif session.cliente_substage == "awaiting_vehicle_confirmation":
+            result =  self.handle_vehicle_confirmation(session, message, set_stage)
+            if result == True:
                 return {
                     'pt': f"(Passo 7 de 10) (Veículo {session.veiculo_atual} de {session.qtd_veiculos}) O veículo é financiado ou quitado?",
                     'en': f"(Step 7 of 10) (Vehicle {session.veiculo_atual} of {session.qtd_veiculos}) Is the vehicle financed or paid off?",
-                    'es': f"(Paso 7 de 10) (Vehículo {session.veiculo_atual} de {session.qtd_veiculos}) ¿El veículo está financiado ou pagado?"
+                    'es': f"(Paso 7 de 10) (Vehículo {session.veiculo_atual} de {session.qtd_veiculos}) ¿El vehículo está financiado o pagado?"
                 }[lang]
             return result
 

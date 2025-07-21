@@ -8,6 +8,11 @@ from services.trello_service import Trello
 
 class ConversationFlow:
     texts = {
+        'only_text': {
+            'pt': "Desculpa, eu entendo apenas mensagem de texto (por enquanto).",
+            'en': "Sorry, I only understand text messages (for now).",
+            'es': "Disculpa, solo entiendo mensajes de texto (por ahora)."
+        },
         'select_language': {
             'pt': "Se deseja conversar em português, selecione 1\n",
             'en': "If you would like to speak in English, press 2\n",
@@ -74,7 +79,35 @@ class ConversationFlow:
             'pt': "Erro para localizar o cliente para enviar ao Trello. Um especialista irá te ajudar!",
             'en': "Error locating the client to send to Trello. A specialist will help you!",
             'es': "Error al localizar al cliente para enviar a Trello. ¡Un especialista le ayudará!"
-        }
+        },
+        'help': {
+            'pt': (
+                "🆘 *Ajuda*\n"
+                "• Para iniciar uma cotação, digite: 1 ou 'cotação'\n"
+                "• Para chamar o suporte, digite: 2 ou 'suporte'\n"
+                "• Para reiniciar a conversa, digite: 'reiniciar'\n"
+                "• Para sair, basta digitar sair.\n"
+                "• Para voltar ao passo anterior de uma cotação, digite: 'voltar'\n"
+            ),
+            'en': (
+                "🆘 *Help*\n"
+                "• To start a quote, type: 1 or 'quote'\n"
+                "• To contact support, type: 2 or 'support'\n"
+                "• To restart the conversation, type: 'restart'\n"
+                "• To exit, just type exit.\n"
+                "• To go back to the previous step in a quote, type: 'back'\n"
+            ),
+            'es': (
+                "🆘 *Ayuda*\n"
+                "• Para iniciar una cotización, escriba: 1 o 'cotización'\n"
+                "• Para contactar soporte, escriba: 2 o 'soporte'\n"
+                "• Para reiniciar la conversación, escriba: 'reiniciar'\n"
+                "• Para salir, solo escriba salir.\n"
+                "• Para volver al paso anterior en una cotización, escriba: 'volver'\n"
+            )
+        },
+
+
     }
     def __init__(self):
         self.trello_service = Trello()
@@ -105,13 +138,17 @@ class ConversationFlow:
         lang = getattr(session, 'language', 'pt')
 
         if not message:
-            return "Desculpa, eu entendo apenas mensagem de texto"
+            return self.texts['only_text'][lang]
 
         if message.strip().lower() in ["reiniciar", "restart"]:
             self.reset_session(phone_number)
             return self.texts['restart'][lang]
+
         elif message.strip().lower() in ["ajuda", "ayuda", "help"]:
-            pass
+            return self.texts['help'][lang]
+        
+        elif message.strip().lower() in ['salir', "sair", "exit"]:
+            return self.handle_exit(phone_number)
 
         stage = session.cliente_stage
         if stage == "select_language":
@@ -131,6 +168,7 @@ class ConversationFlow:
         else:
             return self.texts['restart'][lang]
 
+        
     def handle_select_language(self, phone_number):
         session = self.get_user_session(phone_number)
         self.set_stage(session, new_stage='waiting_language')
@@ -238,7 +276,7 @@ class ConversationFlow:
         return self.texts['quote_complete'][lang]
     
     def reset_session(self, phone_number):
-        cliente = Cliente.query.filter_by(phone_number=phone_number).first()
+        cliente = self.get_user_session(phone_number)
         if cliente:
             cliente.cliente_stage = 'initial'
             cliente.cliente_substage = None
@@ -251,3 +289,24 @@ class ConversationFlow:
             cliente.empresa_endereco = None
 
             db.session.commit()
+
+    def handle_exit(self, phone_number):
+        session = self.get_user_session(phone_number)
+        if session:
+            session.cliente_stage = 'select_language'
+            session.cliente_substage = None
+            session.tipo_cotacao = None
+
+            session.cliente_motoristas = None
+            session.cliente_seguro_anterior = None
+
+            session.empresa_usdot = None
+            session.empresa_endereco = None
+
+            db.session.commit()
+        lang = getattr(session, 'language', 'pt')
+        return {
+            'pt': "Conversa finalizada. Se precisar, é só mandar uma mensagem novamente!",
+            'en': "Conversation ended. If you need anything, just send a message again!",
+            'es': "Conversación finalizada. Si necesita algo, solo envíe un mensaje nuevamente!"
+        }[lang]

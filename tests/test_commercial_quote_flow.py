@@ -149,9 +149,41 @@ def test_handle_vin_size_valid():
     session = DummySession()
     session.cliente_substage = 'awaiting_vin'
     session.cliente_veiculos = []
-    result = flow.handle_vin(session, '01234567890123456', dummy_set_stage)
+    result = flow.handle_vin(session, '4T1B11HK9KU850127', dummy_set_stage)
+    assert "o carro que você está tentando adicionar é um" in result.lower().strip()
+    assert session.cliente_substage == 'awaiting_vehicle_confirmation'
+
+def test_handle_vehicle_confirmation_yes():
+    flow = ComercialQuoteFlow()
+    session = DummySession()
+    session.vin_temp = "4T1B11HK9KU850127"
+    session.cliente_substage = 'awaiting_vehicle_confirmation'
+    session.cliente_veiculos = []
+    result = flow.handle_vehicle_confirmation(session, 'sim', dummy_set_stage)
     assert result == True
     assert session.cliente_substage == 'awaiting_financiado'
+
+def test_handle_vehicle_confirmation_no():
+    flow = ComercialQuoteFlow()
+    session = DummySession()
+    session.vin_temp = "4T1B11HK9KU850127"
+    session.cliente_substage = 'awaiting_vehicle_confirmation'
+    session.cliente_veiculos = []
+    result = flow.handle_vehicle_confirmation(session, 'no', dummy_set_stage)
+    assert "vamos tentar novamente. por favor, digite o vin do" in result.lower().strip()
+ 
+    assert session.cliente_substage == 'awaiting_vin'
+    
+def test_handle_vehicle_confirmation_incorrect():
+    flow = ComercialQuoteFlow()
+    session = DummySession()
+    session.vin_temp = "4T1B11HK9KU850127"
+    session.cliente_substage = 'awaiting_vehicle_confirmation'
+    session.cliente_veiculos = []
+    result = flow.handle_vehicle_confirmation(session, 'idk', dummy_set_stage)
+    assert "não entendi a sua resposta! pode" in result.lower().strip()
+    assert session.cliente_substage == 'awaiting_vehicle_confirmation'
+
 
 
 ## TESTE ADIÇÃO MOTORISTA/TRANSIÇÃO

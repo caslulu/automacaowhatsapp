@@ -1,4 +1,4 @@
-from utils.utility import parse_data_flexivel
+from utils.utility import parse_data_flexivel, veiculo_vin
 from datetime import datetime
 from sqlalchemy.orm.attributes import flag_modified
 
@@ -98,10 +98,28 @@ class BaseQuoteFlow:
         vin = message.strip()
         if len(vin) != 17:
             return self.texts["vin_erro"][lang]
-        session.cliente_veiculos.append({"vin": vin})
-        flag_modified(session, "cliente_veiculos")
-        set_stage(session, new_quote_step='awaiting_financiado')
-        return True
+        veiculo_info = veiculo_vin(vin)
+        session.vin_temp = vin
+        set_stage(session, new_quote_step = "awaiting_vehicle_confirmation")
+        return {
+            'pt': f"O carro que você está tentando adicionar é um {veiculo_info}? (Responda sim ou não)",
+            'en': f"The car you are trying to add is a {veiculo_info}? (Reply yes or no)",
+            'es': f"¿El auto que está intentando agregar es un {veiculo_info}? (Responda sí o no)"
+        }[lang]
+
+    def handle_vehicle_confirmation(self, session, message, set_stage):
+        lang = getattr(session, 'language', 'pt')
+        if message.strip().lower() in ['sim', 's' 'yes', 'y', 'si']:
+            session.cliente_veiculos.append({"vin": session.vin_temp})
+            flag_modified(session, "cliente_veiculos")
+            set_stage(session, new_quote_step='awaiting_financiado')
+            return True
+        elif message.strip().lower() in ["nao", "n", "no", "não"]:
+            set_stage(session, new_quote_step='awaiting_vin')
+            return self.texts["vin_confirmacao_erro"][lang]
+        else:
+            return self.texts["tem_seguro_anterior_erro"][lang]
+
     def handle_financiado(self, session, message, set_stage):
         lang = getattr(session, 'language', 'pt')
         financiado = message.strip().lower()

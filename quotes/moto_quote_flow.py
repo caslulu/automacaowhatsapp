@@ -126,7 +126,12 @@ class MotoQuoteFlow(BaseQuoteFlow):
             'pt': "(Passo 9 de 10) Todos os motoristas extras foram cadastrados! Agora, você possui seguro atualmente ou teve seguro nos últimos 30 dias?",
             'en': "(Step 9 of 10) All extra drivers have been registered! Now, do you currently have insurance or have you had insurance in the last 30 days?",
             'es': "(Paso 9 de 10) ¡Todos los conductores adicionales han sido registrados! Ahora, ¿tiene seguro actualmente o ha tenido seguro en los últimos 30 días?"
-        }
+        },
+    'vin_confirmacao_erro': {
+        'pt': "Ok, vamos tentar novamente. Por favor, digite o VIN do veículo que deseja adicionar.",
+        'en': "Okay, let's try again. Please enter the VIN of the vehicle you want to add.",
+        'es': "Bien, intentemos de nuevo. Por favor, ingrese el VIN del vehículo que desea agregar."
+    }
     }
 
     def handle(self, phone_number, message, session, set_stage, concluir_cotacao):
@@ -163,13 +168,16 @@ class MotoQuoteFlow(BaseQuoteFlow):
                 }[lang]
             return result
 
-        elif session.cliente_substage == 'awaiting_vin':
-            result = self.handle_vin(session, message, set_stage)
-            if result is True:
+        elif session.cliente_substage == "awaiting_vin":
+            return self.handle_vin(session, message, set_stage)
+
+        elif session.cliente_substage == "awaiting_vehicle_confirmation":
+            result =  self.handle_vehicle_confirmation(session, message, set_stage)
+            if result == True:
                 return {
-                    'pt': f"(Passo 7 de 10) (Moto {session.veiculo_atual} de {session.qtd_veiculos}) A moto é financiada ou quitada?",
-                    'en': f"(Step 7 of 10) (Motorcycle {session.veiculo_atual} of {session.qtd_veiculos}) Is the motorcycle financed or paid off?",
-                    'es': f"(Paso 7 de 10) (Moto {session.veiculo_atual} de {session.qtd_veiculos}) ¿La moto está financiada o pagada?"
+                    'pt': f"(Passo 7 de 10) (Veículo {session.veiculo_atual} de {session.qtd_veiculos}) A moto é financiado ou quitado?",
+                    'en': f"(Step 7 of 10) (Vehicle {session.veiculo_atual} of {session.qtd_veiculos}) Is the motorcycle financed or paid off?",
+                    'es': f"(Paso 7 de 10) (Vehículo {session.veiculo_atual} de {session.qtd_veiculos}) ¿la moto está financiado o pagado?"
                 }[lang]
             return result
 
