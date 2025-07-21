@@ -178,7 +178,7 @@ def test_handle_last_motorist():
 
     result = flow.handle_motoristas_relacao(session, "amigo", dummy_set_stage)
     assert session.cliente_substage == "awaiting_nome_empresa"
-    assert "Agora, qual o nome da empresa?" in result
+    assert "qual o nome da empresa?" in result.lower().strip()
 
 # ENDERECO DA EMPRESA
 def test_endereco_empresa():
@@ -213,3 +213,47 @@ def test_endereco_empresa_diferente():
     assert session.cliente_substage == "awaiting_veiculos"
     assert session.cliente_address == "rua blabla"
     assert "Quantos veículos você" in result
+
+# Testes em inglês
+def test_handle_vin_size_invalid_en():
+    flow = ComercialQuoteFlow()
+    session = DummySession()
+    session.language = 'en'
+    session.cliente_substage = 'awaiting_vin'
+    result = flow.handle_vin(session, '01234567', dummy_set_stage)
+    assert "The VIN must be 17 characters" in result
+    assert session.cliente_substage == 'awaiting_vin'
+
+def test_handle_last_motorist_en():
+    flow = ComercialQuoteFlow()
+    session = DummySession()
+    session.language = 'en'
+    session.qtd_motoristas = 1
+    session.motorista_atual = 1
+    session.cliente_motoristas = [{"nome": "Jose", "birthdate": "02/02/2000", "driver_license": "SA4371431", "driver_license_state": "Massa"}]
+    session.cliente_substage = 'awaiting_relation'
+    result = flow.handle_motoristas_relacao(session, "employee", dummy_set_stage)
+    assert session.cliente_substage == "awaiting_nome_empresa"
+    assert "What is the company name?" in result
+
+# Testes em espanhol
+def test_handle_vin_size_invalid_es():
+    flow = ComercialQuoteFlow()
+    session = DummySession()
+    session.language = 'es'
+    session.cliente_substage = 'awaiting_vin'
+    result = flow.handle_vin(session, '01234567', dummy_set_stage)
+    assert "El VIN debe tener 17 caracteres" in result
+    assert session.cliente_substage == 'awaiting_vin'
+
+def test_handle_last_motorist_es():
+    flow = ComercialQuoteFlow()
+    session = DummySession()
+    session.language = 'es'
+    session.qtd_motoristas = 1
+    session.motorista_atual = 1
+    session.cliente_motoristas = [{"nome": "Jose", "birthdate": "02/02/2000", "driver_license": "SA4371431", "driver_license_state": "Massa"}]
+    session.cliente_substage = 'awaiting_relation'
+    result = flow.handle_motoristas_relacao(session, "empleado", dummy_set_stage)
+    assert session.cliente_substage == "awaiting_nome_empresa"
+    assert "¿Cuál es el nombre de la empresa?" in result

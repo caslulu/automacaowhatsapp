@@ -211,3 +211,67 @@ def test_handle_tem_seguro_anterior_valid_nteve():
     result = flow.handle_tem_seguro_anterior(session, "nao", dummy_set_stage, mock_concluir_cotacao, phone_number)
 
     assert session.cliente_substage == 'awaiting_seguro_anterior'
+
+def test_handle_vin_size_invalid_en():
+    flow = AutoQuoteFlow()
+    session = DummySession()
+    session.language = 'en'
+    session.cliente_substage = 'awaiting_vin'
+    result = flow.handle_vin(session, '01234567', dummy_set_stage)
+    assert "The VIN must be 17 characters" in result
+    assert session.cliente_substage == 'awaiting_vin'
+
+def test_handle_last_motorist_en():
+    flow = AutoQuoteFlow()
+    session = DummySession()
+    session.language = 'en'
+    session.qtd_motoristas = 1
+    session.motorista_atual = 1
+    session.cliente_motoristas = [{"nome": "Jose", "birthdate": "02/02/2000", "driver_license": "SA4371431", "driver_license_state": "Massa"}]
+    session.cliente_substage = 'awaiting_relation'
+    result = flow.handle_motoristas_relacao(session, "friend", dummy_set_stage)
+    assert session.cliente_substage == "awaiting_seguro_anterior"
+    assert "do you currently have insurance or have you had insurance in the last 30 days?" in result
+
+def test_handle_tem_seguro_anterior_invalid_en():
+    flow = AutoQuoteFlow()
+    session = DummySession()
+    session.language = 'en'
+    session.cliente_substage = "awaiting_seguro_anterior"
+    def mock_concluir_cotacao(*args, **kwargs): pass
+    phone_number = '1199999999999999'
+    result = flow.handle_tem_seguro_anterior(session, "I don't know", dummy_set_stage, mock_concluir_cotacao, phone_number)
+    assert session.cliente_substage == 'awaiting_seguro_anterior'
+    assert "didn't understand your answer" in result
+
+def test_handle_vin_size_invalid_es():
+    flow = AutoQuoteFlow()
+    session = DummySession()
+    session.language = 'es'
+    session.cliente_substage = 'awaiting_vin'
+    result = flow.handle_vin(session, '01234567', dummy_set_stage)
+    assert "El VIN debe tener 17 caracteres" in result
+    assert session.cliente_substage == 'awaiting_vin'
+
+def test_handle_last_motorist_es():
+    flow = AutoQuoteFlow()
+    session = DummySession()
+    session.language = 'es'
+    session.qtd_motoristas = 1
+    session.motorista_atual = 1
+    session.cliente_motoristas = [{"nome": "Jose", "birthdate": "02/02/2000", "driver_license": "SA4371431", "driver_license_state": "Massa"}]
+    session.cliente_substage = 'awaiting_relation'
+    result = flow.handle_motoristas_relacao(session, "amigo", dummy_set_stage)
+    assert session.cliente_substage == "awaiting_seguro_anterior"
+    assert "¿tiene seguro actualmente o ha tenido seguro en los últimos 30 días?" in result
+
+def test_handle_tem_seguro_anterior_invalid_es():
+    flow = AutoQuoteFlow()
+    session = DummySession()
+    session.language = 'es'
+    session.cliente_substage = "awaiting_seguro_anterior"
+    def mock_concluir_cotacao(*args, **kwargs): pass
+    phone_number = '1199999999999999'
+    result = flow.handle_tem_seguro_anterior(session, "no sé", dummy_set_stage, mock_concluir_cotacao, phone_number)
+    assert session.cliente_substage == 'awaiting_seguro_anterior'
+    assert "no entendí su respuesta" in result

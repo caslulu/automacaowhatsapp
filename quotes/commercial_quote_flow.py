@@ -148,7 +148,7 @@ class ComercialQuoteFlow(BaseQuoteFlow):
             set_stage(session, new_quote_step='awaiting_motorista_nome')
             return True
         set_stage(session, new_quote_step='awaiting_nome_empresa')
-        return "Agora, qual o nome da empresa?"
+        return self.texts['sem_outros_motoristas'][lang]
 
     def handle_address(self, session, message, set_stage):
         lang = getattr(session, 'language', 'pt')

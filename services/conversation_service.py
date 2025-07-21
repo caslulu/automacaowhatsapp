@@ -110,6 +110,8 @@ class ConversationFlow:
         if message.strip().lower() in ["reiniciar", "restart"]:
             self.reset_session(phone_number)
             return self.texts['restart'][lang]
+        elif message.strip().lower() in ["ajuda", "ayuda", "help"]:
+            pass
 
         stage = session.cliente_stage
         if stage == "select_language":

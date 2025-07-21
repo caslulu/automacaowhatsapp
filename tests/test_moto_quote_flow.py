@@ -211,3 +211,63 @@ def test_handle_tem_seguro_anterior_valid_nteve():
     result = flow.handle_tem_seguro_anterior(session, "nao", dummy_set_stage, mock_concluir_cotacao, phone_number)
 
     assert session.cliente_substage == 'awaiting_seguro_anterior'
+
+# TESTANDO OUTRAS LINGUAGENS
+def test_handle_birthdate_en():
+    flow = MotoQuoteFlow()
+    session = DummySession()
+    session.language = 'en'
+    result = flow.handle_birthdate(session, '01/20/1990', dummy_set_stage)
+    assert session.cliente_birthdate == "01/20/1990"
+    assert session.cliente_substage == "awaiting_driverlicense"
+    assert "Thank you! Now, what is your driver license" in result
+
+def test_handle_birthdate_es():
+    flow = MotoQuoteFlow()
+    session = DummySession()
+    session.language = 'es'
+    result = flow.handle_birthdate(session, '20/01/1990', dummy_set_stage)
+    assert session.cliente_birthdate == "01/20/1990"
+    assert session.cliente_substage == "awaiting_driverlicense"
+    assert "¡Gracias! Ahora, ¿cuál es su número de licencia" in result
+
+def test_handle_vin_size_invalid_en():
+    flow = MotoQuoteFlow()
+    session = DummySession()
+    session.language = 'en'
+    session.cliente_substage = 'awaiting_vin'
+    result = flow.handle_vin(session, '01234567', dummy_set_stage)
+    assert "The VIN must be 17 characters" in result
+    assert session.cliente_substage == 'awaiting_vin'
+
+def test_handle_vin_size_invalid_es():
+    flow = MotoQuoteFlow()
+    session = DummySession()
+    session.language = 'es'
+    session.cliente_substage = 'awaiting_vin'
+    result = flow.handle_vin(session, '01234567', dummy_set_stage)
+    assert "El VIN debe tener 17 caracteres" in result
+    assert session.cliente_substage == 'awaiting_vin'
+
+
+def test_handle_tem_seguro_anterior_invalid_en():
+    flow = MotoQuoteFlow()
+    session = DummySession()
+    session.language = 'en'
+    session.cliente_substage = "awaiting_seguro_anterior"
+    def mock_concluir_cotacao(*args, **kwargs): pass
+    phone_number = '1199999999999999'
+    result = flow.handle_tem_seguro_anterior(session, "I don't know", dummy_set_stage, mock_concluir_cotacao, phone_number)
+    assert session.cliente_substage == 'awaiting_seguro_anterior'
+    assert "didn't understand your answer" in result
+
+def test_handle_tem_seguro_anterior_invalid_es():
+    flow = MotoQuoteFlow()
+    session = DummySession()
+    session.language = 'es'
+    session.cliente_substage = "awaiting_seguro_anterior"
+    def mock_concluir_cotacao(*args, **kwargs): pass
+    phone_number = '1199999999999999'
+    result = flow.handle_tem_seguro_anterior(session, "no sé", dummy_set_stage, mock_concluir_cotacao, phone_number)
+    assert session.cliente_substage == 'awaiting_seguro_anterior'
+    assert "no entendí su respuesta" in result
