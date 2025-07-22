@@ -172,7 +172,7 @@ def test_handle_vehicle_confirmation_no():
     session.cliente_substage = 'awaiting_vehicle_confirmation'
     session.cliente_veiculos = []
     result = flow.handle_vehicle_confirmation(session, 'no', dummy_set_stage)
-    assert "vamos tentar novamente. por favor, digite o vin da" in result.lower().strip()
+    assert "vamos tentar novamente. por favor, digite o vin da moto" in result.lower().strip()
  
     assert session.cliente_substage == 'awaiting_vin'
     
@@ -305,3 +305,4 @@ def test_handle_tem_seguro_anterior_invalid_es():
     result = flow.handle_tem_seguro_anterior(session, "no sé", dummy_set_stage, mock_concluir_cotacao, phone_number)
     assert session.cliente_substage == 'awaiting_seguro_anterior'
     assert "no entendí su respuesta" in result
+
