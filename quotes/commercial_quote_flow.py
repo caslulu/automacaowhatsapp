@@ -1,140 +1,8 @@
 from quotes.base_quote_flow import BaseQuoteFlow
 from sqlalchemy.orm.attributes import flag_modified
+from quotes.messages import texts
 class ComercialQuoteFlow(BaseQuoteFlow):
-    texts = {
-        'birthdate': {
-            'pt': "(Passo 2 de 10) Obrigado! Agora, qual a sua data de nascimento? (use o formato MM/DD/AAAA)",
-            'en': "(Step 2 of 10) Thank you! Now, what is your date of birth? (use MM/DD/YYYY)",
-            'es': "(Paso 2 de 10) ¡Gracias! Agora, ¿cuál es su fecha de nacimiento? (use MM/DD/AAAA)"
-        },
-        'birthdate_error': {
-            'pt': "Ops! parece que você digitou a data de nascimento errada, tem como corrigir?",
-            'en': "Oops! It looks like you entered the wrong date of birth, can you correct it?",
-            'es': "¡Ups! Parece que ingresó la fecha de nacimiento incorrecta, ¿puede corregirla?"
-        },
-        'birthdate_invalido': {
-            'pt': "Data inválida. Por favor, informe a data de nascimento no formato MM/DD/AAAA.",
-            'en': "Invalid date. Please provide the date of birth in MM/DD/YYYY format.",
-            'es': "Fecha inválida. Por favor, proporcione la fecha de nacimiento en formato MM/DD/AAAA."
-        },
-        'data_maior_erro': {
-            'pt': "Data inválida. Por favor, informe uma data de nascimento válida.",
-            'en': "Invalid date. Please provide a valid date of birth.",
-            'es': "Fecha inválida. Por favor, proporcione una fecha de nacimiento válida."
-        },
-        'nome_erro': {
-            'pt': "O nome não pode ficar em branco.",
-            'en': "The name cannot be blank.",
-            'es': "El nombre no puede estar en blanco."
-        },
-        'driverlicense': {
-            'pt': "(Passo 3 de 10) Obrigado! Agora, qual o número da sua driver license, cnh ou passaporte?",
-            'en': "(Step 3 of 10) Thank you! Now, what is your driver license or passporte?",
-            'es': "(Paso 3 de 10) ¡Gracias! Ahora, ¿cuál es su número de licencia de conducir o pasaporte?"
-        },
-        'driver_state': {
-            'pt': "(Passo 4 de 10) Perfeito! Poderia me dizer qual o estado da sua driver license? (Se for internacional, diga internacional)",
-            'en': "(Step 4 of 10) Perfect! Could you tell me the state of your driver license? (If international, say international)",
-            'es': "(Paso 4 de 10) ¡Perfecto! ¿Podría decirme el estado de su licencia de conducir? (Si es internacional, diga internacional)"
-        },
-        'motorista_driver_erro': {
-            'pt': "O número da CNH não pode ficar em branco. Por favor, informe corretamente.",
-            'en': "The driver license number cannot be blank. Please provide it correctly.",
-            'es': "El número de la licencia de conducir no puede estar en blanco. Por favor, infórmelo corretamente."
-        },
-        'motorista_driver_state_erro': {
-            'pt': "O estado da CNH não pode ficar em branco. Por favor, informe corretamente.",
-            'en': "The driver license state cannot be blank. Please provide it correctly.",
-            'es': "El estado de la licencia de conducir no puede estar en blanco. Por favor, infórmelo corretamente."
-        },
-        'relacao_vazia_erro': {
-            'pt': "A relação não pode ficar em branco. Por favor, informe corretamente (Ex: funcionário, sócio, etc).",
-            'en': "The relationship cannot be blank. Please provide it correctly (e.g., employee, partner, etc).",
-            'es': "La relación no puede estar en blanco. Por favor, infórmela correctamente (Ej: empleado, socio, etc)."
-        },
-        'address': {
-            'pt': "(Passo 5 de 10) Obrigado! Poderia me dizer qual o seu endereço? (Inclua o zipcode, por favor!)",
-            'en': "(Step 5 of 10) Thank you! Could you tell me your address? (Please include the zipcode!)",
-            'es': "(Paso 5 de 10) ¡Gracias! ¿Podría decirme su dirección? (¡Incluya el código postal, por favor!)"
-        },
-        'comercial_address': {
-            'pt': "(Passo 6 de 10) Qual o endereço comercial? (Se for o mesmo, digite 'mesmo')",
-            'en': "(Step 6 of 10) What is the business address? (If the same, type 'same')",
-            'es': "(Paso 6 de 10) ¿Cuál es la dirección comercial? (Si es la misma, escriba 'misma')"
-        },
-        'qtd_veiculos': {
-            'pt': "(Passo 7 de 10) Quantos veículos você deseja adicionar?",
-            'en': "(Step 7 of 10) How many vehicles would you like to add?",
-            'es': "(Paso 7 de 10) ¿Cuántos vehículos desea agregar?"
-        },
-        'qtd_veiculos_erro': {
-            'pt': "Por favor, informe um número válido de veículos.",
-            'en': "Please enter a valid number of vehicles.",
-            'es': "Por favor, ingrese un número válido de vehículos."
-        },
-        'vin_erro': {
-            'pt': "O VIN deve ter 17 caracteres. Por favor, verifique e envie novamente.",
-            'en': "The VIN must be 17 characters. Please check and send again.",
-            'es': "El VIN debe tener 17 caracteres. Por favor, verifique y envíe nuevamente."
-        },
-        'financiado_erro': {
-            'pt': "Por favor, responda apenas 'financiado' ou 'quitado'.",
-            'en': "Please answer only 'financed' or 'paid off'.",
-            'es': "Por favor, responda solo 'financiado' o 'pagado'."
-        },
-        'tempo_erro': {
-            'pt': "Por favor, informe há quanto tempo você possui o veículo.",
-            'en': "Please inform how long you have owned the vehicle.",
-            'es': "Por favor, indique cuánto tiempo ha tenido el vehículo."
-        },
-        'cadastrar_outros_motoristas': {
-            'pt': "Todos os veículos foram cadastrados! Deseja cadastrar outros motoristas?",
-            'en': "All vehicles have been registered! Would you like to add other drivers?",
-            'es': "¡Todos los vehículos han sido registrados! ¿Desea agregar otros conductores?"
-        },
-        'sem_outros_motoristas': {
-            'pt': "Ok, sem motoristas extras. Estamos quase acabando! Qual o nome da empresa?",
-            'en': "Ok, no extra drivers. We're almost done! What is the company name?",
-            'es': "Ok, sin conductores adicionales. ¡Ya casi terminamos! ¿Cuál es el nombre de la empresa?"
-        },
-        'quantos_motoristas': {
-            'pt': "Entendido. Quantos motoristas extras você gostaria de adicionar?",
-            'en': "Understood. How many extra drivers would you like to add?",
-            'es': "Entendido. ¿Cuántos conductores adicionales le gustaría agregar?"
-        },
-        'qtd_motorista_menor_erro': {
-            'pt': "Por favor, digite um número válido (1 ou mais).",
-            'en': "Please enter a valid number (1 or more).",
-            'es': "Por favor, ingrese un número válido (1 o más)."
-        },
-        'qtd_motorista_erro': {
-            'pt': "Não entendi. Por favor, digite apenas o número de motoristas extras.",
-            'en': "I didn't understand. Please enter only the number of extra drivers.",
-            'es': "No entendí. Por favor, ingrese solo el número de conductores adicionales."
-        },
-        'tempo_endereco': {
-            'pt': "(Passo 6 de 10) Okay! Poderia me dizer quanto tempo você mora nesse endereço atual?",
-            'en': "(Step 6 of 10) Okay! How long have you lived at your current address?",
-            'es': "(Paso 6 de 10) ¡Bien! ¿Cuánto tiempo ha vivido en esta dirección atual?"
-        },
-
-        'cadastrar_outros_motoristas_erro': {
-            'pt': "Não entendi sua resposta. Por favor, responda com 'sim' ou 'não'.",
-            'en': "I didn't understand your answer. Please reply with 'yes' or 'no'.",
-            'es': "No entendí su respuesta. Por favor, responda con 'sí' o 'no'."
-        },
-        'vin_confirmacao_erro': {
-            'pt': "Ok, vamos tentar novamente. Por favor, digite o VIN do veículo que deseja adicionar.",
-            'en': "Okay, let's try again. Please enter the VIN of the vehicle you want to add.",
-            'es': "Bien, intentemos de nuevo. Por favor, ingrese el VIN del vehículo que desea agregar."
-        },
-        'tem_seguro_anterior_erro': {
-            'pt': "Desculpa, não entendi a sua resposta! pode dizer sim ou não?",
-            'en': "Sorry, I didn't understand your answer! Can you say yes or no?",
-            'es': "Disculpa, ¡no entendí su respuesta! ¿Puede decir sí o no?"
-        },
-    }
-
+    texts = texts
     def handle_outros_motoristas(self, session, message, set_stage):
         lang = getattr(session, 'language', 'pt')
         if "sim" in message.strip().lower() or "yes" in message.strip().lower():
@@ -216,7 +84,7 @@ class ComercialQuoteFlow(BaseQuoteFlow):
             else:
                 session.empresa_endereco = message
             set_stage(session, new_quote_step='awaiting_veiculos')
-            return self.texts['qtd_veiculos'][lang]
+            return self.texts['qtd_veiculos_comercial'][lang]
 
         # Delegar etapas de veículos e motoristas para métodos herdados
         elif session.cliente_substage == "awaiting_veiculos":

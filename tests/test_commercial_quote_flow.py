@@ -75,6 +75,7 @@ def test_handle_multiple_vehicles():
 def test_handle_tempo_last_vehicle():
     flow = ComercialQuoteFlow()
     session = DummySession()
+    session.tipo_cotacao = "comercial"
     session.qtd_veiculos = 2
     session.veiculo_atual = 2
     session.cliente_veiculos = [
@@ -92,6 +93,7 @@ def test_handle_tempo_last_vehicle():
 def test_handle_qtd_veiculos_invalid():
     flow = ComercialQuoteFlow()
     session = DummySession()
+    session.tipo_cotacao = "comercial"
     session.cliente_substage = 'awaiting_veiculos'
     result = flow.handle_qtd_veiculos(session, 'zero', dummy_set_stage)
     assert "número válido" in result
@@ -100,6 +102,7 @@ def test_handle_qtd_veiculos_invalid():
 def test_handl_qtd_veiculos_menor():
     flow = ComercialQuoteFlow()
     session = DummySession()
+    session.tipo_cotacao = "comercial"
     session.cliente_substage = 'awaiting_veiculos'
     result = flow.handle_qtd_veiculos(session, '0', dummy_set_stage)
     assert "número válido" in result
@@ -150,7 +153,7 @@ def test_handle_vin_size_valid():
     session.cliente_substage = 'awaiting_vin'
     session.cliente_veiculos = []
     result = flow.handle_vin(session, '4T1B11HK9KU850127', dummy_set_stage)
-    assert "o carro que você está tentando adicionar é um" in result.lower().strip()
+    assert "o veiculo que você está tentando adicionar é um" in result.lower().strip()
     assert session.cliente_substage == 'awaiting_vehicle_confirmation'
 
 def test_handle_vehicle_confirmation_yes():
@@ -166,6 +169,7 @@ def test_handle_vehicle_confirmation_yes():
 def test_handle_vehicle_confirmation_no():
     flow = ComercialQuoteFlow()
     session = DummySession()
+    session.tipo_cotacao = "comercial"
     session.vin_temp = "4T1B11HK9KU850127"
     session.cliente_substage = 'awaiting_vehicle_confirmation'
     session.cliente_veiculos = []
@@ -231,7 +235,7 @@ def test_endereco_empresa_mesmo():
     result = flow.handle(phone_number, "mesmo", session, dummy_set_stage, dummy_concluir_cotacao)
     assert session.empresa_endereco == 'rua blabla'
     assert session.cliente_substage == "awaiting_veiculos"
-    assert "Quantos veículos você" in result
+    assert "Quantos veículos comerciais você" in result
 
 
 def test_endereco_empresa_diferente():
@@ -244,7 +248,7 @@ def test_endereco_empresa_diferente():
     assert session.empresa_endereco == "rua teste"
     assert session.cliente_substage == "awaiting_veiculos"
     assert session.cliente_address == "rua blabla"
-    assert "Quantos veículos você" in result
+    assert "Quantos veículos comerciais você" in result
 
 # Testes em inglês
 def test_handle_vin_size_invalid_en():

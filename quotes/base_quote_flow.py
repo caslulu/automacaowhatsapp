@@ -77,21 +77,22 @@ class BaseQuoteFlow:
         lang = getattr(session, 'language', 'pt')
         session.cliente_tempo_endereco = message
         set_stage(session, new_quote_step="awaiting_veiculos")
-        return self.texts["qtd_veiculos"][lang]
+        return self.texts[f"qtd_veiculos_{session.tipo_cotacao}"][lang]
 
     def handle_qtd_veiculos(self, session, message, set_stage):
         lang = getattr(session, 'language', 'pt')
         try:
             qtd = int(message)
             if qtd < 1:
-                return self.texts["qtd_veiculos_erro"][lang]
+                return self.texts[f'qtd_veiculos_erro_{session.tipo_cotacao}'][lang]
+
             session.qtd_veiculos = qtd
             session.veiculo_atual = 1
             session.cliente_veiculos = [] 
             set_stage(session, new_quote_step='awaiting_vin')
             return True
         except ValueError:
-            return self.texts['qtd_veiculos_erro'][lang]
+            return self.texts[f'qtd_veiculos_erro_{session.tipo_cotacao}'][lang]
     
     def handle_vin(self, session, message, set_stage):
         lang = getattr(session, 'language', 'pt')
@@ -102,9 +103,9 @@ class BaseQuoteFlow:
         session.vin_temp = vin
         set_stage(session, new_quote_step = "awaiting_vehicle_confirmation")
         return {
-            'pt': f"O carro que você está tentando adicionar é um {veiculo_info}? (Responda sim ou não)",
-            'en': f"The car you are trying to add is a {veiculo_info}? (Reply yes or no)",
-            'es': f"¿El auto que está intentando agregar es un {veiculo_info}? (Responda sí o no)"
+            'pt': f"O veiculo que você está tentando adicionar é um {veiculo_info}? (Responda sim ou não)",
+            'en': f"The vehicle you are trying to add is a {veiculo_info}? (Reply yes or no)",
+            'es': f"¿El vehículo que está intentando agregar es un {veiculo_info}? (Responda sí o no)"
         }[lang]
 
     def handle_vehicle_confirmation(self, session, message, set_stage):
@@ -116,7 +117,7 @@ class BaseQuoteFlow:
             return True
         elif message.strip().lower() in ["nao", "n", "no", "não"]:
             set_stage(session, new_quote_step='awaiting_vin')
-            return self.texts["vin_confirmacao_erro"][lang]
+            return self.texts[f"vin_confirmacao_erro_{session.tipo_cotacao}"][lang]
         else:
             return self.texts["tem_seguro_anterior_erro"][lang]
 
@@ -133,7 +134,7 @@ class BaseQuoteFlow:
         lang = getattr(session, 'language', 'pt')
         tempo = message.strip()
         if not tempo:
-            return self.texts["tempo_erro"][lang]
+            return self.texts[f"tempo_erro_{session.tipo_cotacao}"][lang]
         session.cliente_veiculos[-1]["tempo"] = tempo
         flag_modified(session, "cliente_veiculos")
         if session.veiculo_atual < session.qtd_veiculos:
@@ -142,7 +143,7 @@ class BaseQuoteFlow:
             return True
         else:
             set_stage(session, new_quote_step='awaiting_outros_motoristas')
-            return self.texts["cadastrar_outros_motoristas"][lang]
+            return self.texts[f"cadastrar_outros_motoristas_{session.tipo_cotacao}"][lang]
     def handle_outros_motoristas(self, session, message, set_stage):
         lang = getattr(session, 'language', 'pt')
         resposta = message.lower()
@@ -212,7 +213,7 @@ class BaseQuoteFlow:
         lang = getattr(session, 'language', 'pt')
         relacao = message.strip()
         if not relacao:
-            return self.texts["relacao_vazia_erro"][lang]
+            return self.texts[f"relacao_vazia_erro_{session.tipo_cotacao}"][lang]
         session.cliente_motoristas[-1]["relation"] = relacao
         flag_modified(session, "cliente_motoristas")
         if session.motorista_atual < session.qtd_motoristas:

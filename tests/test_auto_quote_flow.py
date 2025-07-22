@@ -73,6 +73,7 @@ def test_handle_multiple_vehicles():
 def test_handle_tempo_last_vehicle():
     flow = AutoQuoteFlow()
     session = DummySession()
+    session.tipo_cotacao = "auto"
     session.qtd_veiculos = 2
     session.veiculo_atual = 2
     session.cliente_veiculos = [
@@ -90,6 +91,7 @@ def test_handle_tempo_last_vehicle():
 def test_handle_qtd_veiculos_invalid():
     flow = AutoQuoteFlow()
     session = DummySession()
+    session.tipo_cotacao = "auto"
     session.cliente_substage = 'awaiting_veiculos'
     result = flow.handle_qtd_veiculos(session, 'zero', dummy_set_stage)
     assert "número válido" in result
@@ -98,6 +100,7 @@ def test_handle_qtd_veiculos_invalid():
 def test_handl_qtd_veiculos_menor():
     flow = AutoQuoteFlow()
     session = DummySession()
+    session.tipo_cotacao = "auto"
     session.cliente_substage = 'awaiting_veiculos'
     result = flow.handle_qtd_veiculos(session, '0', dummy_set_stage)
     assert "número válido" in result
@@ -106,6 +109,7 @@ def test_handl_qtd_veiculos_menor():
 def test_handle_qtd_veiculos_valid():
     flow = AutoQuoteFlow()
     session = DummySession()
+    session.tipo_cotacao = "auto"
     session.cliente_substage = 'awaiting_veiculos'
     result = flow.handle_qtd_veiculos(session, '1', dummy_set_stage)
     assert result == True 
@@ -148,7 +152,7 @@ def test_handle_vin_size_valid():
     session.cliente_substage = 'awaiting_vin'
     session.cliente_veiculos = []
     result = flow.handle_vin(session, '4T1B11HK9KU850127', dummy_set_stage)
-    assert "o carro que você está tentando adicionar é um" in result.lower().strip()
+    assert "o veiculo que você está tentando adicionar é um" in result.lower().strip()
     assert session.cliente_substage == 'awaiting_vehicle_confirmation'
 
 
@@ -165,6 +169,7 @@ def test_handle_vehicle_confirmation_yes():
 def test_handle_vehicle_confirmation_no():
     flow = AutoQuoteFlow()
     session = DummySession()
+    session.tipo_cotacao = "auto"
     session.vin_temp = "4T1B11HK9KU850127"
     session.cliente_substage = 'awaiting_vehicle_confirmation'
     session.cliente_veiculos = []
