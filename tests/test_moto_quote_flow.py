@@ -49,7 +49,7 @@ def test_handle_birthdate_invalid():
 def test_handle_birthdate_invalid_bigger():
     flow = MotoQuoteFlow()
     session = DummySession()
-    result = flow.handle_birthdate(session, '07/30/2025', dummy_set_stage)
+    result = flow.handle_birthdate(session, '07/30/2045', dummy_set_stage)
     assert session.cliente_birthdate == None
     assert session.cliente_substage == 'awaiting_birthdate'
     assert "Ops! parece que você" in result 

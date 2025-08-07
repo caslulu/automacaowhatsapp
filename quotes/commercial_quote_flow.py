@@ -35,24 +35,33 @@ class ComercialQuoteFlow(BaseQuoteFlow):
         return self.texts["comercial_address"][lang]
 
     def handle_back(self, session, set_stage):
+        lang = getattr(session, 'language', 'pt')
         if session.cliente_substage == 'awaiting_nome_empresa':
             set_stage(session, new_quote_step='awaiting_outros_motoristas')
+            return self.texts['back'][lang]
         elif session.cliente_substage == 'awaiting_tem_usdot':
             set_stage(session, new_quote_step='awaiting_nome_empresa')
+            return self.texts['back'][lang]
         elif session.cliente_substage == 'awaiting_usdot':
             set_stage(session, new_quote_step='awaiting_tem_usdot')
+            return self.texts['back'][lang]
         elif session.cliente_substage == 'awaiting_numero_registro':
             set_stage(session, new_quote_step='awaiting_usdot')
+            return self.texts['back'][lang]
         elif session.cliente_substage == 'awaiting_estrutura_empresa':
             set_stage(session, new_quote_step='awaiting_numero_registro')
+            return self.texts['back'][lang]
         elif session.cliente_substage == 'awaiting_ramo':
             set_stage(session, new_quote_step='awaiting_estrutura_empresa')
+            return self.texts['back'][lang]
         elif session.cliente_substage == 'awaiting_carga':
             set_stage(session, new_quote_step='awaiting_ramo')
+            return self.texts['back'][lang]
         elif session.cliente_substage == 'awaiting_milhas_dia':
             set_stage(session, new_quote_step='awaiting_carga')
+            return self.texts['back'][lang]
         else:
-            super().handle_back(session, set_stage)
+            return super().handle_back(session, set_stage)
 
     def handle(self, phone_number, message, session, set_stage, concluir_cotacao):
         lang = getattr(session, 'language', 'pt')
@@ -280,6 +289,8 @@ class ComercialQuoteFlow(BaseQuoteFlow):
                 session.empresa_milhas_trabalho = message
             return concluir_cotacao(phone_number)
 
+        else:
+            return texts["erro_reiniciar"][lang]
 
 
 

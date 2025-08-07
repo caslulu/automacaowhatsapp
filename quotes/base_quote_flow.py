@@ -29,18 +29,9 @@ class BaseQuoteFlow:
         atual = session.cliente_substage
         if atual in self.previous_steps:
             set_stage(session, new_quote_step=self.previous_steps[atual])
-            return self.texts['back'][lang] if 'back' in self.texts else {
-                'pt': "Você voltou para o passo anterior. Por favor, informe novamente:",
-                'en': "You have returned to the previous step. Please provide the information again:",
-                'es': "Has vuelto al paso anterior. Por favor, proporciona la información nuevamente:"
-            }[lang]
+            return self.texts['back'][lang]
         else:
-            return self.texts['back_limit'][lang] if 'back_limit' in self.texts else {
-                'pt': "Não é possível voltar mais",
-                'en': "You can't go back any further",
-                'es': "No es posible retroceder más"
-            }[lang]
-
+            return self.texts['back_limit'][lang]
     def handle_nome(self, session, message, set_stage):
         lang = getattr(session, 'language', 'pt')
         session.cliente_nome = message

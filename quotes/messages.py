@@ -300,5 +300,19 @@ texts = {
             "• Para volver al paso anterior en una cotización, escriba: 'volver'\n"
         )
     },
-
+    "back_limit": {
+        'pt': "Não é possível voltar mais",
+        'en': "You can't go back any further",
+        'es': "No es posible retroceder más"
+    },
+    "back":{
+        'pt': "Você voltou para o passo anterior. Por favor, informe novamente:",
+        'en': "You have returned to the previous step. Please provide the information again:",
+        'es': "Has vuelto al paso anterior. Por favor, proporciona la información nuevamente:"
+    },
+    "erro_reiniciar": {
+        'pt': "Desculpa, Ocorreu um erro! preciso que voce digite 'reiniciar' para reiniciar o sistema.",
+        'en': "Sorry, an error occurred! Please type 'restart' to restart the system.",
+        'es': "Disculpa, ocurrió un error. Necesito que escriba 'reiniciar' para reiniciar el sistema."
+    }
 }

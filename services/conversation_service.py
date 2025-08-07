@@ -65,7 +65,7 @@ class ConversationFlow:
         elif stage == 'suporte':
             return self.handle_support(phone_number, message)
         else:
-            return self.texts['restart'][lang]
+            return self.texts['erro_reiniciar'][lang]
 
         
     def handle_select_language(self, phone_number):

@@ -141,9 +141,4 @@ class AutoQuoteFlow(BaseQuoteFlow):
             return concluir_cotacao(phone_number)
 
         else:
-            return {
-                'pt': "Desculpe, não entendi sua resposta. Por favor, tente novamente ou digite 'voltar' para retornar ao passo anterior.",
-                'en': "Sorry, I didn't understand your answer. Please try again or type 'back' to return to the previous step.",
-                'es': "Disculpa, no entendí su respuesta. Por favor, inténtelo de nuevo o escriba 'volver' para regresar al paso anterior."
-            }[lang]
-
+            return texts["erro_reiniciar"][lang]
