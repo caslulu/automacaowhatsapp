@@ -54,7 +54,7 @@ def test_handle_birthdate_invalid_bigger():
     result = flow.handle_birthdate(session, '07/30/2045', dummy_set_stage)
     assert session.cliente_birthdate == None
     assert session.cliente_substage == 'awaiting_birthdate'
-    assert "Ops! parece que você" in result 
+    assert "Por favor, informe uma data de nascimento" in result 
 
 # TESTES DA ADIÇÃO DE VEICULOS/TRANSIÇÃO
 def test_handle_multiple_vehicles():

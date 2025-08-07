@@ -41,10 +41,12 @@ class BaseQuoteFlow:
     def handle_birthdate(self, session, message, set_stage):
         lang = getattr(session, 'language', 'pt')
         data = parse_data_flexivel(message)
-        if data is not None and data < datetime.now():
+        if data is not None and data <= datetime.now():
             session.cliente_birthdate = datetime.strftime(data, '%m/%d/%Y')
             set_stage(session, new_quote_step='awaiting_driverlicense')
             return self.texts['driverlicense'][lang]
+        elif data is not None and data > datetime.now():
+            return self.texts['data_maior_erro'][lang]
         return self.texts['birthdate_error'][lang]
     def handle_driverlicense(self, session, message, set_stage):
         lang = getattr(session, 'language', 'pt')
