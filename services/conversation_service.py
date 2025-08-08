@@ -1,4 +1,5 @@
 from models.model import Cliente
+import time
 from utils.extensions import db
 from quotes.auto_quote_flow import AutoQuoteFlow
 from quotes.commercial_quote_flow import ComercialQuoteFlow
@@ -13,6 +14,7 @@ class ConversationFlow:
         self.auto_quote = AutoQuoteFlow()
         self.comercial_quote = ComercialQuoteFlow()
         self.moto_quote = MotoQuoteFlow()    
+
     def get_user_session(self, phone_number):
         cliente = Cliente.query.filter_by(phone_number=phone_number).first()
         
@@ -42,6 +44,10 @@ class ConversationFlow:
         if message.strip().lower() in ["reiniciar", "restart"]:
             self.reset_session(phone_number)
             return self.texts['restart'][lang]
+        
+        elif message.strip().lower() in ["suporte", "support", "soporte"]:
+            self.handle_support(phone_number, message)
+            return self.texts['suporte_certeza'][lang]
 
         elif message.strip().lower() in ["ajuda", "ayuda", "help"]:
             return self.texts['help'][lang]
@@ -76,7 +82,7 @@ class ConversationFlow:
             f"{self.texts['select_language']['en']}\n\n"
             f"{self.texts['select_language']['es']}"
         )
-
+        
     def handle_option_language(self, phone_number, message):
         session = self.get_user_session(phone_number)
         if "1" in message.strip().lower() or "portugues" in message.strip().lower():
@@ -107,7 +113,7 @@ class ConversationFlow:
             return self.texts['type_quote'][lang]
         elif "2" in message or "suporte" in message:
             self.set_stage(session, new_stage='suporte')
-            return self.texts['support'][lang]
+            return self.texts['suporte_certeza'][lang]
         elif "reiniciar" in message.lower() or "restart" in message.lower():
             self.reset_session(phone_number)  
             return self.texts['restart'][lang]
@@ -139,8 +145,30 @@ class ConversationFlow:
             return self.comercial_quote.handle(phone_number, message, session, self.set_stage, self.concluir_cotacao)
         elif session.tipo_cotacao == "moto":
             return self.moto_quote.handle(phone_number, message, session, self.set_stage, self.concluir_cotacao)
+    
+    def handle_support(self, phone_number, message):
+        session = self.get_user_session(phone_number)
 
-        
+        lang = getattr(session, 'language', 'pt')
+
+        ## garante que a ultima interação foi há menos de 10 minutos
+        now = time.time()
+        timeout = 600 
+        last_interaction = getattr(session, 'last_interaction', now)
+        if now - last_interaction > timeout and session.cliente_stage == 'suporte':
+            self.set_stage(session, new_stage='initial')
+            session.last_interaction = now
+            return self.texts['support_timeout'][lang]
+
+        if message.strip().lower() in ["sim", "yes", "si"]:
+            self.set_stage(session, new_stage='suporte')
+            return self.texts['support'][lang]
+
+        elif message.strip().lower() in ["nao", "no", "não"]:
+            return self.texts['support_no'][lang]
+        else:
+            return self.texts['option_error'][lang]
+
     def concluir_cotacao(self, phone_number):
         session = self.get_user_session(phone_number)
         if not session:

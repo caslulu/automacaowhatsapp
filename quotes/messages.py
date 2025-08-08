@@ -242,6 +242,21 @@ texts = {
         'en': "I understand, what problem are you having? We will connect you with an agent.",
         'es': "Entiendo, ¿qué problema está teniendo? Lo conectaremos con un agente."
     },
+    'support_no': {
+            "pt":"Okay, agora, volte a fazer o que estava fazendo anteriormente.",
+            "en":"Okay, now go back to doing what you were doing before.",
+            "es":"Está bien, ahora vuelve a hacer lo que estabas haciendo antes."
+    },
+    'suporte_certeza':{
+            'pt': "Você tem certeza que deseja  falar com o suporte? (sim/não",
+            'en': "Are you sure you want to talk to support? (yes/no)",
+            'es': "¿Está seguro de que desea hablar con soporte? (sí/no)"
+    },
+    "support_timeout": {
+            'pt': "Desculpa, parece que voce não respondeu a tempo. Por favor, digite 'suporte' novamente se precisar de ajuda.",
+            'en': "Sorry, it seems you didn't respond in time. Please type 'support' again if you need help.",
+            'es': "Disculpa, parece que no respondió a tiempo. Por favor, escriba 'soporte' nuevamente si necesita ayuda." 
+    },
     'language_error': {
         'pt': "Desculpa, não entendi. Você precisa selecionar uma das línguas disponíveis.",
         'en': "Sorry, I didn't understand. You need to select one of the available languages.",
