@@ -44,6 +44,12 @@ texts = {
         'en': "(Step 6 of 10) How many commercial vehicles would you like to add?",
         'es': "(Paso 6 de 10) ¿Cuántos vehículos comerciales desea agregar?"
     },
+    'vin_duplicado': {
+        'pt': "Parece que você já adicionou esse VIN. Por favor, verifique e tente novamente.",
+        'en': "It seems you have already added this VIN. Please check and try again.",
+        'es': "Parece que ya ha agregado este VIN. Por favor, verifique y vuelva a intentarlo.",
+    },
+    
     'cadastrar_outros_motoristas_moto': {
         'pt': "(Passo 8 de 10) Todas as motos foram cadastradas! Deseja cadastrar outros motoristas?",
         'en': "(Step 8 of 10) All motorcycles have been registered! Would you like to add other drivers?",

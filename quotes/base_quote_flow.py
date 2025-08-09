@@ -1,29 +1,32 @@
 from utils.utility import parse_data_flexivel, veiculo_vin
+from typing import Dict, Any
 from datetime import datetime
 from sqlalchemy.orm.attributes import flag_modified
 
 class BaseQuoteFlow:
 
-    previous_steps = {
-        "awaiting_birthdate": "awaiting_name",
-        "awaiting_driverlicense": "awaiting_birthdate",
-        "awaiting_driverstate": "awaiting_driverlicense",
-        "awaiting_address": "awaiting_driverstate",
-        "awaiting_tempo_endereco": "awaiting_address",
-        "awaiting_veiculos": "awaiting_tempo_endereco",
-        "awaiting_vin": "awaiting_veiculos",
-        "awaiting_financiado": "awaiting_vin",
-        "awaiting_tempo": "awaiting_financiado",
-        "awaiting_outros_motoristas": "awaiting_tempo",
-        "awaiting_qtd_motoristas": "awaiting_outros_motoristas",
-        "awaiting_motorista_birthdate": "awaiting_qtd_motoristas",
-        "awaiting_motorista_driver": "awaiting_motorista_birthdate",
-        "awaiting_motorista_state": "awaiting_motorista_driver",
-        "awaiting_motorista_relacao": "awaiting_motorista_state",
-        "awaiting_seguro_anterior": "awaiting_motorista_relacao",
-        "awaiting_tempo_seguro_anterior": "awaiting_seguro_anterior"  
-    }
+    texts: Dict[str, Any]
     
+    previous_steps = {
+    "awaiting_birthdate": "awaiting_name",
+    "awaiting_driverlicense": "awaiting_birthdate",
+    "awaiting_driverstate": "awaiting_driverlicense",
+    "awaiting_address": "awaiting_driverstate",
+    "awaiting_tempo_endereco": "awaiting_address",
+    "awaiting_veiculos": "awaiting_tempo_endereco",
+    "awaiting_vin": "awaiting_veiculos",
+    "awaiting_financiado": "awaiting_vin",
+    "awaiting_tempo": "awaiting_financiado",
+    "awaiting_outros_motoristas": "awaiting_tempo",
+    "awaiting_qtd_motoristas": "awaiting_outros_motoristas",
+    "awaiting_motorista_birthdate": "awaiting_qtd_motoristas",
+    "awaiting_motorista_driver": "awaiting_motorista_birthdate",
+    "awaiting_motorista_state": "awaiting_motorista_driver",
+    "awaiting_motorista_relacao": "awaiting_motorista_state",
+    "awaiting_seguro_anterior": "awaiting_motorista_relacao",
+    "awaiting_tempo_seguro_anterior": "awaiting_seguro_anterior"  
+}
+
     def handle_back(self, session, set_stage):
         lang = getattr(session, 'language', 'pt')
         atual = session.cliente_substage
@@ -94,6 +97,9 @@ class BaseQuoteFlow:
             return self.texts["vin_erro"][lang]
         veiculo_info = veiculo_vin(vin)
         session.vin_temp = vin
+        if vin in [v['vin'] for v in session.cliente_veiculos]:
+            return self.texts["vin_duplicado"][lang]
+
         set_stage(session, new_quote_step = "awaiting_vehicle_confirmation")
         return {
             'pt': f"O veiculo que você está tentando adicionar é um {veiculo_info}? (Responda sim ou não)",

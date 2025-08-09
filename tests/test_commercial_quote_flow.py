@@ -250,6 +250,36 @@ def test_endereco_empresa_diferente():
     assert session.cliente_address == "rua blabla"
     assert "Quantos veículos comerciais você" in result
 
+def test_handle_vin_nao_existente():
+    flow = ComercialQuoteFlow()
+    session = DummySession()
+    session.tipo_cotacao = "auto"
+    session.qtd_veiculos = 2
+    session.veiculo_atual = 2
+    session.cliente_veiculos = [
+        {"vin": "4T1B11HK9KU850127", "financiado": "quitado", "tempo": "2 anos"},
+    ]
+    session.cliente_substage = "awaiting_vin"
+
+    result = flow.handle_vin(session, "4T1B11HK9KU850127", dummy_set_stage)
+    assert session.cliente_substage == "awaiting_vin"
+    assert "parece que você já adicionou esse vin" in result.lower()
+
+def test_handle_vin_existente():
+    flow = ComercialQuoteFlow()
+    session = DummySession()
+    session.tipo_cotacao = "auto"
+    session.qtd_veiculos = 2
+    session.veiculo_atual = 2
+    session.cliente_veiculos = [
+        {"vin": "4T1B11HK9KU850128", "financiado": "quitado", "tempo": "2 anos"},
+    ]
+    session.cliente_substage = "awaiting_vin"
+
+    result = flow.handle_vin(session, "4T1B11HK9KU850127", dummy_set_stage)
+    assert session.cliente_substage == "awaiting_vehicle_confirmation"
+    assert "está tentando adicionar" in result.lower()
+
 # Testes em inglês
 def test_handle_vin_size_invalid_en():
     flow = ComercialQuoteFlow()
